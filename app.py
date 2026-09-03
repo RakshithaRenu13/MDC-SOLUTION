@@ -22,6 +22,87 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+# ------------------------------------------------------------
+# MDC / Eaton Professional Theme
+# ------------------------------------------------------------
+st.markdown(
+    """
+    <style>
+    :root {
+        --mdc-blue: #0167C9;
+        --mdc-dark-blue: #004B91;
+        --mdc-light-blue: #EAF3FC;
+    }
+
+    /* Main headings */
+    h1, h2, h3 {
+        color: #004B91 !important;
+    }
+
+    /* Streamlit section headers */
+    [data-testid="stHeader"] {
+        background-color: transparent;
+    }
+
+    /* Primary buttons */
+    .stButton > button,
+    .stDownloadButton > button {
+        background-color: #0167C9;
+        color: white;
+        border: 1px solid #0167C9;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .stButton > button:hover,
+    .stDownloadButton > button:hover {
+        background-color: #004B91;
+        border-color: #004B91;
+        color: white;
+    }
+
+    /* Radio buttons / selected controls */
+    div[role="radiogroup"] label[data-checked="true"] {
+        color: #0167C9 !important;
+    }
+
+    /* Checkbox accent */
+    input[type="checkbox"] {
+        accent-color: #0167C9;
+    }
+
+    /* Links */
+    a {
+        color: #0167C9 !important;
+    }
+
+    /* Horizontal divider */
+    hr {
+        border-color: #D6E6F5;
+    }
+
+    /* Number input focus */
+    div[data-baseweb="input"]:focus-within {
+        border-color: #0167C9 !important;
+        box-shadow: 0 0 0 1px #0167C9 !important;
+    }
+
+    /* Selectbox focus */
+    div[data-baseweb="select"]:focus-within {
+        border-color: #0167C9 !important;
+        box-shadow: 0 0 0 1px #0167C9 !important;
+    }
+
+    /* Text input / textarea focus */
+    div[data-baseweb="input"]:focus-within,
+    div[data-baseweb="textarea"]:focus-within {
+        border-color: #0167C9 !important;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MASTER_FILE = os.path.join(BASE_DIR, "MDC_Master_V1.xlsx")
 DEMO_INTERNAL_PASSWORD = "MDC@123"  # Change before production.
@@ -389,17 +470,41 @@ def excel_bytes(internal=False, bom=None, cost_data=None, final_selling_price=0.
 # ------------------------------------------------------------
 st.markdown(
     """
-    <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:42px;">🏢</div>
+    <div style="
+        display:flex;
+        align-items:center;
+        gap:14px;
+        padding:12px 0 16px 0;
+    ">
+        <div style="
+            width:8px;
+            height:55px;
+            background:#0167C9;
+            border-radius:4px;
+        "></div>
+
         <div>
-            <h1 style="margin:0;">MDC Solution</h1>
-            <div style="color:#666;">Rack Configuration & Solution Selection</div>
+            <div style="
+                font-size:36px;
+                font-weight:700;
+                color:#004B91;
+                line-height:1.1;
+            ">
+                MDC Solution
+            </div>
+
+            <div style="
+                font-size:16px;
+                color:#64748B;
+                margin-top:5px;
+            ">
+                Rack Configuration & Solution Selection
+            </div>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
-st.divider()
 
 # ------------------------------------------------------------
 # Access mode
