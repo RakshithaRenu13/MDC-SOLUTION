@@ -576,109 +576,68 @@ st.session_state.solution = st.text_area(
 # # 2 MDC Type & Configuration
 # # Both Sales and Internal users can select MDC type/configuration.
 # # ------------------------------------------------------------
- st.header("2. MDC Type & Configuration")
+ # ============================================================
+# 2. MDC Type & Configuration
+# ============================================================
 
- mdc_type = st.radio(
-     "MDC Type",
-     ["Single Rack", "Multirack"],
-     horizontal=True,
-     index=0 if st.session_state.mdc_type == "Single Rack" else 1,
- )
+st.header("2. MDC Type & Configuration")
 
- if mdc_type != st.session_state.mdc_type:
-     st.session_state.mdc_type = mdc_type
-     st.session_state.configuration = "Configuration 1"
-     st.session_state.accessory_qty = {}
-     st.session_state.pdu_qty = {}
-     st.rerun()
+mdc_type = st.radio(
+    "MDC Type",
+    ["Single Rack", "Multirack"],
+    horizontal=True,
+    index=0 if st.session_state.mdc_type == "Single Rack" else 1,
+)
 
- available = configs_df[
-     configs_df["MDC Type"] == st.session_state.mdc_type
- ].copy()
+if mdc_type != st.session_state.mdc_type:
+    st.session_state.mdc_type = mdc_type
+    st.session_state.configuration = "Configuration 1"
+    st.session_state.accessory_qty = {}
+    st.session_state.pdu_qty = {}
+    st.rerun()
 
- labels = available["Configuration"].tolist()
+available = configs_df[
+    configs_df["MDC Type"] == st.session_state.mdc_type
+].copy()
 
- if labels:
-     st.session_state.configuration = st.selectbox(
-         "Select Configuration",
-         labels,
-         index=labels.index(st.session_state.configuration)
-         if st.session_state.configuration in labels else 0,
-     )
+labels = available["Configuration"].tolist()
+
+if labels:
+    st.session_state.configuration = st.selectbox(
+        "Select Configuration",
+        labels,
+        index=(
+            labels.index(st.session_state.configuration)
+            if st.session_state.configuration in labels
+            else 0
+        ),
+    )
+
+# ------------------------------------------------------------
+# Selected Configuration Display
+# ------------------------------------------------------------
 
 cfg = selected_config_record()
- if cfg is not None:
-     if cfg["Status"] == "REAL DATA":
-         st.success(
-             f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-         )
-     else:
-         st.warning(
-             f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-         )
-  if cfg["Status"] == "REAL DATA":
-    st.markdown(
-        f"""
-        <div style="
-            background-color: #005EB8;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        ">
-            Selected Configuration:
-            {cfg["Configuration"]} — {cfg["Configuration Title"]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-else:
-    st.markdown(
-        f"""
-        <div style="
-            background-color: #005EB8;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        ">
-            Selected Configuration:
-            {cfg["Configuration"]} — {cfg["Configuration Title"]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-# if cfg is not None:
-#     st.markdown(
-#         f"""
-#         <div style="
-#             background-color: #005EB8;
-#             color: white;
-#             padding: 15px 20px;
-#             border-radius: 10px;
-#             font-size: 18px;
-#             font-weight: 600;
-#             margin-top: 10px;
-#             margin-bottom: 10px;
-#         ">
-#             Selected Configuration:
-#             {cfg["Configuration"]} — {cfg["Configuration Title"]}
-#         </div>
-#         """,
-#         unsafe_allow_html=True
-#     )
-# if not is_internal:
-#     st.caption(
-#         "Sales can select Single Rack/Multirack and the required configuration. "
-#         "Internal cost information remains hidden."
-#     )
 
+if cfg is not None:
+    st.markdown(
+        f"""
+        <div style="
+            background-color: #005EB8;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        ">
+            Selected Configuration:
+            {cfg["Configuration"]} — {cfg["Configuration Title"]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 # ------------------------------------------------------------
 # 3 Optional accessories
 # ------------------------------------------------------------
