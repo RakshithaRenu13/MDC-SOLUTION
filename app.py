@@ -728,7 +728,7 @@ if not bom.empty:
     st.dataframe(display, use_container_width=True, hide_index=True)
 
     known = bom_with_price["Total Price"].dropna().sum()
-    price_box("BOM Selling Value", float(known))
+    price_box("Final Selling Price", float(known))
 
     # if not is_internal:
     #     st.caption("Sales view contains selling prices only. Internal unit cost and total cost are not displayed.")
