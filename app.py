@@ -210,35 +210,175 @@ def customer_table():
         ["Configuration", st.session_state.configuration],
     ], columns=["Field", "Value"])
 
-def excel_bytes(internal=False, bom=None, cost_data=None):
+def excel_bytes(internal=False, bom=None, cost_data=None, final_selling_price=0.0):
     output = BytesIO()
+
     cust = customer_table()
 
     if bom is None:
         bom = build_bom()
 
+    # --------------------------------------------------------
+    # Create ONE combined Excel sheet only
+    # --------------------------------------------------------
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        cust.to_excel(writer, index=False, sheet_name="Customer & Configuration")
 
-        sales_cols = [
-            "S.No.", "Component Type", "Part Code", "Description", "Quantity",
-            "UOM", "Unit Price", "Total Price"
-        ]
-        sales_bom = bom[sales_cols].copy()
-        sales_bom.to_excel(writer, index=False, sheet_name="Final BOM")
+        sheet_name = "MDC Solution"
 
-        if internal and cost_data is not None:
-            internal_bom = bom.copy()
-            internal_cols = [
-                "S.No.", "Component Type", "Part Code", "Description", "Quantity", "UOM",
-                "Unit Cost", "Total Cost", "Unit Price", "Total Price"
-            ]
-            internal_bom[internal_cols].to_excel(
-                writer, index=False, sheet_name="Internal Cost BOM"
+        # ====================================================
+        # CUSTOMER DETAILS & CONFIGURATION
+        # ====================================================
+        start_row = 0
+
+        cust.to_excel(
+            writer,
+            index=False,
+            sheet_name=sheet_name,
+            startrow=start_row
+        )
+
+        start_row += len(cust) + 3
+
+        # ====================================================
+        # INTERNAL EXCEL
+        # ====================================================
+        if internal:
+
+            # -------------------------------
+            # Internal Cost BOM
+            # -------------------------------
+            pd.DataFrame(
+                [["INTERNAL COST BOM"]],
+                columns=["Section"]
+            ).to_excel(
+                writer,
+                index=False,
+                sheet_name=sheet_name,
+                startrow=start_row
             )
 
-            pd.DataFrame(cost_data, columns=["Item", "Value"]).to_excel(
-                writer, index=False, sheet_name="Cost Summary"
+            start_row += 2
+
+            internal_cols = [
+                "S.No.",
+                "Component Type",
+                "Part Code",
+                "Description",
+                "Quantity",
+                "UOM",
+                "Unit Cost",
+                "Total Cost",
+                "Unit Price",
+                "Total Price"
+            ]
+
+            internal_bom = bom[internal_cols].copy()
+
+            internal_bom.to_excel(
+                writer,
+                index=False,
+                sheet_name=sheet_name,
+                startrow=start_row
+            )
+
+            start_row += len(internal_bom) + 3
+
+            # -------------------------------
+            # Cost Summary
+            # -------------------------------
+            pd.DataFrame(
+                [["COST SUMMARY"]],
+                columns=["Section"]
+            ).to_excel(
+                writer,
+                index=False,
+                sheet_name=sheet_name,
+                startrow=start_row
+            )
+
+            start_row += 2
+
+            summary_data = []
+
+            if cost_data is not None:
+                summary_data.extend(cost_data)
+
+            # Ensure Final Selling Price is included
+            if not any(
+                str(row[0]).strip().lower() == "final selling price"
+                for row in summary_data
+            ):
+                summary_data.append(
+                    ["Final Selling Price", final_selling_price]
+                )
+
+            summary_df = pd.DataFrame(
+                summary_data,
+                columns=["Item", "Value"]
+            )
+
+            summary_df.to_excel(
+                writer,
+                index=False,
+                sheet_name=sheet_name,
+                startrow=start_row
+            )
+
+        # ====================================================
+        # SALES EXCEL
+        # ====================================================
+        else:
+
+            # -------------------------------
+            # Final BOM
+            # -------------------------------
+            pd.DataFrame(
+                [["FINAL BOM"]],
+                columns=["Section"]
+            ).to_excel(
+                writer,
+                index=False,
+                sheet_name=sheet_name,
+                startrow=start_row
+            )
+
+            start_row += 2
+
+            sales_cols = [
+                "S.No.",
+                "Component Type",
+                "Part Code",
+                "Description",
+                "Quantity",
+                "UOM",
+                "Unit Price",
+                "Total Price"
+            ]
+
+            sales_bom = bom[sales_cols].copy()
+
+            sales_bom.to_excel(
+                writer,
+                index=False,
+                sheet_name=sheet_name,
+                startrow=start_row
+            )
+
+            start_row += len(sales_bom) + 3
+
+            # -------------------------------
+            # Final Selling Price
+            # -------------------------------
+            pd.DataFrame(
+                [
+                    ["FINAL SELLING PRICE", final_selling_price]
+                ],
+                columns=["Item", "Value"]
+            ).to_excel(
+                writer,
+                index=False,
+                sheet_name=sheet_name,
+                startrow=start_row
             )
 
     output.seek(0)
@@ -582,6 +722,7 @@ if not bom.empty:
         internal=False,
         bom=bom_with_price,
         cost_data=None,
+        final_selling_price=final_selling_price,
     )
 
     if is_internal:
@@ -595,6 +736,7 @@ if not bom.empty:
                     internal=True,
                     bom=bom_with_price,
                     cost_data=internal_cost_data,
+                    final_selling_price=final_selling_price,
                 ),
                 file_name="MDC_Internal_Cost.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
