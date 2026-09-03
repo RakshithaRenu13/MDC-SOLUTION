@@ -476,36 +476,40 @@ def excel_bytes(internal=False, bom=None, cost_data=None, final_selling_price=0.
 # MAIN HEADER
 # ============================================================
 
-st.markdown(
-    """
-    <div style="
-        background: linear-gradient(135deg, #005EB8 0%, #003B71 100%);
-        padding: 22px 30px;
-        border-radius: 10px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
-    ">
-        <div style="
-            color: white;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-        ">
-            Eaton MDC Solution Configurator
-        </div>
+# ============================================================
+# EATON MDC HEADER
+# ============================================================
 
-        <p style="
-            color: #E6F2FF;
-            font-size: 16px;
-            font-weight: 400;
-            margin: 5px 0 0 0;
-        ">
-            Modular Data Center Solution Configuration &amp; Pricing
-        </p>
+st.html("""
+<div style="
+    background: linear-gradient(135deg, #005EB8, #003B71);
+    padding: 22px 30px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
+">
+
+    <div style="
+        color: white;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        line-height: 1.2;
+    ">
+        Eaton MDC Solution Configurator
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+
+    <div style="
+        color: #E6F2FF;
+        font-size: 16px;
+        font-weight: 400;
+        margin-top: 7px;
+    ">
+        Modular Data Center Solution Configuration &amp; Pricing
+    </div>
+
+</div>
+""")
 # ------------------------------------------------------------
 # Access mode
 # ------------------------------------------------------------
