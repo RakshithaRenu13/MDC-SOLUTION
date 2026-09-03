@@ -525,7 +525,7 @@ for _, r in accessories_df.iterrows():
     key_check = f"acc_check_{part}"
     key_qty = f"acc_qty_{part}"
 
-    cols = st.columns([8, 1.5])
+    cols = st.columns([6, 2, 2])
 
     # Component selection
     with cols[0]:
