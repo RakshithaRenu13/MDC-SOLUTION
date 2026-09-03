@@ -532,8 +532,8 @@ for _, r in accessories_df.iterrows():
     )
 
     cols = st.columns([6, 2, 2])
-    with cols[0]:
-        st.caption(f'UOM: {r["UOM"]} | Pricing status: {r["Pricing Status"]}')
+    # with cols[0]:
+    #     st.caption(f'UOM: {r["UOM"]} | Pricing status: {r["Pricing Status"]}')
     with cols[1]:
         if selected:
             qty = st.number_input(
@@ -566,10 +566,10 @@ for _, r in pdus_df.iterrows():
     )
 
     cols = st.columns([6, 2, 2])
-    with cols[0]:
-        st.caption(
-            f'Type: {r["Type"]} | C13: {r["C13"]} | C19: {r["C19"]} | UOM: {r["UOM"]}'
-        )
+    # with cols[0]:
+    #     st.caption(
+    #         f'Type: {r["Type"]} | C13: {r["C13"]} | C19: {r["C19"]} | UOM: {r["UOM"]}'
+    #     )
     with cols[1]:
         if selected:
             qty = st.number_input(
