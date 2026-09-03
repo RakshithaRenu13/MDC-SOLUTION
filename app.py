@@ -652,7 +652,7 @@ if is_internal:
 
     margin_price = total_cost / (1 - margin_pct / 100) if margin_pct < 100 else 0
     final_selling_price = margin_price + freight + installation
-    warranty_amount = margin_price * warranty_pct / 100
+    warranty_amount =( (margin_price * warranty_pct / 100)+margin_price)
 
     a, b, c, d = st.columns(4)
     with a:
