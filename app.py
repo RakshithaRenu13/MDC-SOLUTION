@@ -472,6 +472,10 @@ def excel_bytes(internal=False, bom=None, cost_data=None, final_selling_price=0.
 # MAIN HEADER
 # ============================================================
 
+# ============================================================
+# MAIN HEADER
+# ============================================================
+
 st.markdown(
     """
     <div style="
@@ -486,18 +490,18 @@ st.markdown(
             font-size: 32px;
             font-weight: 700;
             letter-spacing: 0.3px;
-            margin-bottom: 5px;
         ">
             Eaton MDC Solution Configurator
         </div>
 
-        <div style="
+        <p style="
             color: #E6F2FF;
             font-size: 16px;
             font-weight: 400;
+            margin: 5px 0 0 0;
         ">
             Modular Data Center Solution Configuration &amp; Pricing
-        </div>
+        </p>
     </div>
     """,
     unsafe_allow_html=True,
