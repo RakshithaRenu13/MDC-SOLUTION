@@ -584,12 +584,12 @@ if selected_pdu != "None":
 
     st.session_state.pdu_qty[part] = qty
 
-    st.caption(
-        f'Type: {selected_row["Type"]} | '
-        f'C13: {selected_row["C13"]} | '
-        f'C19: {selected_row["C19"]} | '
-        f'UOM: {selected_row["UOM"]}'
-    )
+    # st.caption(
+    #     f'Type: {selected_row["Type"]} | '
+    #     f'C13: {selected_row["C13"]} | '
+    #     f'C19: {selected_row["C19"]} | '
+    #     f'UOM: {selected_row["UOM"]}'
+    # )
 # st.header("4. PDU Selection")
 # # st.caption("Select PDU components and update quantity. Prices are intentionally not shown here.")
 
