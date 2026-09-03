@@ -531,7 +531,7 @@ for _, r in accessories_df.iterrows():
         key=key_check,
     )
 
-    cols = st.columns([6, 2, 2])
+    cols = st.columns([8, 1.2, 0.8])
     # with cols[0]:
     #     st.caption(f'UOM: {r["UOM"]} | Pricing status: {r["Pricing Status"]}')
     with cols[1]:
@@ -604,7 +604,7 @@ if selected_pdu != "None":
 #         key=key_check,
 #     )
 
-#     cols = st.columns([6, 2, 2])
+#     cols = st.columns([8, 1.2, 0.8])
 #     # with cols[0]:
 #     #     st.caption(
 #     #         f'Type: {r["Type"]} | C13: {r["C13"]} | C19: {r["C19"]} | UOM: {r["UOM"]}'
