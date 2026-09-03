@@ -7,7 +7,7 @@ import streamlit as st
 
 # ============================================================
 # MDC SOLUTION - VERSION 1 (REAL SINGLE-RACK DATA)
-# Data source: data/MDC_Master_V1.xlsx
+# Data source: MDC_Master_V1.xlsx (same folder as app.py)
 #
 # Single Rack:
 #   Configuration 1-4 = real data from supplied MDC BOQ
@@ -65,6 +65,23 @@ for key, value in defaults.items():
 def money(value):
     return f"₹ {value:,.2f}"
 
+
+def price_box(label, value):
+    st.markdown(
+        f"""
+        <div style="padding:4px 0 12px 0; min-height:82px; overflow:visible;">
+            <div style="font-size:16px; color:#4b5563; margin-bottom:7px;">
+                {label}
+            </div>
+            <div style="font-size:30px; font-weight:600; color:#30333d;
+                        white-space:nowrap; overflow:visible;">
+                {money(value)}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 def internal_password():
     # Streamlit Cloud / deployment can use st.secrets["MDC_INTERNAL_PASSWORD"].
     try:
@@ -94,7 +111,8 @@ def build_bom():
         qty = float(r["Quantity"])
         rows.append({
             "S.No.": len(rows) + 1,
-            "Part Code": r["Part Code"] if str(r["Part Code"]).strip() else "—",
+            "Component Type": "Base (Configuration)",
+            "Part Code": r["Part Code"] if pd.notna(r["Part Code"]) and str(r["Part Code"]).strip() and str(r["Part Code"]).lower() != "nan" else "",
             "Description": r["Description"],
             "Quantity": qty,
             "UOM": r["UOM"],
@@ -111,7 +129,8 @@ def build_bom():
             cost = r["Unit Cost"]
             rows.append({
                 "S.No.": len(rows) + 1,
-                "Part Code": part if part.strip() else "—",
+                "Component Type": "Optional Accessory",
+                "Part Code": part if part.strip() and part.lower() != "nan" else "",
                 "Description": r["Description"],
                 "Quantity": qty,
                 "UOM": r["UOM"],
@@ -129,7 +148,8 @@ def build_bom():
             desc = f'{r["Description"]} | Type: {r["Type"]} | C13: {r["C13"]} | C19: {r["C19"]}'
             rows.append({
                 "S.No.": len(rows) + 1,
-                "Part Code": part if part.strip() else "—",
+                "Component Type": "PDU",
+                "Part Code": part if part.strip() and part.lower() != "nan" else "",
                 "Description": desc,
                 "Quantity": qty,
                 "UOM": r["UOM"],
@@ -201,7 +221,7 @@ def excel_bytes(internal=False, bom=None, cost_data=None):
         cust.to_excel(writer, index=False, sheet_name="Customer & Configuration")
 
         sales_cols = [
-            "S.No.", "Part Code", "Description", "Quantity",
+            "S.No.", "Component Type", "Part Code", "Description", "Quantity",
             "UOM", "Unit Price", "Total Price"
         ]
         sales_bom = bom[sales_cols].copy()
@@ -210,7 +230,7 @@ def excel_bytes(internal=False, bom=None, cost_data=None):
         if internal and cost_data is not None:
             internal_bom = bom.copy()
             internal_cols = [
-                "S.No.", "Part Code", "Description", "Quantity", "UOM",
+                "S.No.", "Component Type", "Part Code", "Description", "Quantity", "UOM",
                 "Unit Cost", "Total Cost", "Unit Price", "Total Price"
             ]
             internal_bom[internal_cols].to_excel(
@@ -304,28 +324,32 @@ st.session_state.solution = st.text_area(
 )
 
 # ------------------------------------------------------------
-# 2 Configuration
+# 2 MDC Type & Configuration
+# Both Sales and Internal users can select MDC type/configuration.
 # ------------------------------------------------------------
-if is_internal:
-    st.header("2. MDC Type & Configuration")
+st.header("2. MDC Type & Configuration")
 
-    mdc_type = st.radio(
-        "MDC Type",
-        ["Single Rack", "Multirack"],
-        horizontal=True,
-        index=0 if st.session_state.mdc_type == "Single Rack" else 1,
-    )
+mdc_type = st.radio(
+    "MDC Type",
+    ["Single Rack", "Multirack"],
+    horizontal=True,
+    index=0 if st.session_state.mdc_type == "Single Rack" else 1,
+)
 
-    if mdc_type != st.session_state.mdc_type:
-        st.session_state.mdc_type = mdc_type
-        st.session_state.configuration = "Configuration 1"
-        st.rerun()
+if mdc_type != st.session_state.mdc_type:
+    st.session_state.mdc_type = mdc_type
+    st.session_state.configuration = "Configuration 1"
+    st.session_state.accessory_qty = {}
+    st.session_state.pdu_qty = {}
+    st.rerun()
 
-    available = configs_df[
-        configs_df["MDC Type"] == st.session_state.mdc_type
-    ]
+available = configs_df[
+    configs_df["MDC Type"] == st.session_state.mdc_type
+].copy()
 
-    labels = available["Configuration"].tolist()
+labels = available["Configuration"].tolist()
+
+if labels:
     st.session_state.configuration = st.selectbox(
         "Select Configuration",
         labels,
@@ -333,29 +357,22 @@ if is_internal:
         if st.session_state.configuration in labels else 0,
     )
 
-    cfg = selected_config_record()
-    if cfg is not None:
-        if cfg["Status"] == "REAL DATA":
-            st.success(
-                f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-            )
-        else:
-            st.warning(
-                f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-            )
-else:
-    st.header("2. Selected Configuration")
-    cfg = selected_config_record()
-    if cfg is not None:
-        if cfg["Status"] == "REAL DATA":
-            st.info(
-                f'**{cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-            )
-        else:
-            st.warning(
-                f'**{cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-            )
-    st.caption("Configuration selection is controlled by MDC Internal users.")
+cfg = selected_config_record()
+if cfg is not None:
+    if cfg["Status"] == "REAL DATA":
+        st.success(
+            f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
+        )
+    else:
+        st.warning(
+            f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
+        )
+
+if not is_internal:
+    st.caption(
+        "Sales can select Single Rack/Multirack and the required configuration. "
+        "Internal cost information remains hidden."
+    )
 
 # ------------------------------------------------------------
 # 3 Optional accessories
@@ -436,7 +453,7 @@ bom = build_bom()
 
 if not bom.empty:
     structure = bom[[
-        "S.No.", "Part Code", "Description", "Quantity", "UOM"
+        "S.No.", "Component Type", "Part Code", "Description", "Quantity", "UOM"
     ]].copy()
     st.dataframe(structure, use_container_width=True, hide_index=True)
 else:
@@ -456,10 +473,14 @@ if is_internal:
     st.header("6. Cost Summary — Internal Only")
 
     a, b, c, d = st.columns(4)
-    a.metric("Base Cost", money(base_cost))
-    b.metric("Optional Cost", money(optional_cost))
-    c.metric("PDU Cost", money(pdu_cost))
-    d.metric("Total Cost", money(total_cost))
+    with a:
+        price_box("Base Cost", base_cost)
+    with b:
+        price_box("Optional Cost", optional_cost)
+    with c:
+        price_box("PDU Cost", pdu_cost)
+    with d:
+        price_box("Total Cost", total_cost)
 
     st.header("7. Cost to Selling Price — Internal Only")
 
@@ -494,10 +515,14 @@ if is_internal:
     warranty_amount = margin_price * warranty_pct / 100
 
     a, b, c, d = st.columns(4)
-    a.metric("Margin Price", money(margin_price))
-    b.metric("After Freight", money(margin_price + freight))
-    c.metric("Final Selling Price", money(final_selling_price))
-    d.metric("Warranty Amount", money(warranty_amount))
+    with a:
+        price_box("Margin Price", margin_price)
+    with b:
+        price_box("After Freight", margin_price + freight)
+    with c:
+        price_box("Final Selling Price", final_selling_price)
+    with d:
+        price_box("Warranty Amount", warranty_amount)
 
 # ------------------------------------------------------------
 # 8 Final BOM
@@ -510,7 +535,7 @@ if not bom.empty:
     )
 
     display = bom_with_price[[
-        "S.No.", "Part Code", "Description", "Quantity",
+        "S.No.", "Component Type", "Part Code", "Description", "Quantity",
         "UOM", "Unit Price", "Total Price"
     ]].copy()
 
@@ -524,7 +549,7 @@ if not bom.empty:
     st.dataframe(display, use_container_width=True, hide_index=True)
 
     known = bom_with_price["Total Price"].dropna().sum()
-    st.metric("BOM Selling Value", money(float(known)))
+    price_box("BOM Selling Value", float(known))
 
     if not is_internal:
         st.caption("Sales view contains selling prices only. Internal unit cost and total cost are not displayed.")
