@@ -261,7 +261,7 @@ def excel_bytes(internal=False, bom=None, cost_data=None, final_selling_price=0.
 
             internal_cols = [
                 "S.No.",
-                "Component Type",
+                # "Component Type",
                 "Part Code",
                 "Description",
                 "Quantity",
@@ -346,7 +346,7 @@ def excel_bytes(internal=False, bom=None, cost_data=None, final_selling_price=0.
 
             sales_cols = [
                 "S.No.",
-                "Component Type",
+                # "Component Type",
                 "Part Code",
                 "Description",
                 "Quantity",
