@@ -468,43 +468,43 @@ def excel_bytes(internal=False, bom=None, cost_data=None, final_selling_price=0.
 # ------------------------------------------------------------
 # Header
 # ------------------------------------------------------------
-st.markdown(
-    """
-    <div style="
-        display:flex;
-        align-items:center;
-        gap:14px;
-        padding:12px 0 16px 0;
-    ">
-        <div style="
-            width:8px;
-            height:55px;
-            background:#0167C9;
-            border-radius:4px;
-        "></div>
+# st.markdown(
+#     """
+#     <div style="
+#         display:flex;
+#         align-items:center;
+#         gap:14px;
+#         padding:12px 0 16px 0;
+#     ">
+#         <div style="
+#             width:8px;
+#             height:55px;
+#             background:#0167C9;
+#             border-radius:4px;
+#         "></div>
 
-        <div>
-            <div style="
-                font-size:36px;
-                font-weight:700;
-                color:#004B91;
-                line-height:1.1;
-            ">
-                MDC Solution
-            </div>
+#         <div>
+#             <div style="
+#                 font-size:36px;
+#                 font-weight:700;
+#                 color:#004B91;
+#                 line-height:1.1;
+#             ">
+#                 MDC Solution
+#             </div>
 
-            <div style="
-                font-size:16px;
-                color:#64748B;
-                margin-top:5px;
-            ">
-                Rack Configuration & Solution Selection
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+#             <div style="
+#                 font-size:16px;
+#                 color:#64748B;
+#                 margin-top:5px;
+#             ">
+#                 Rack Configuration & Solution Selection
+#             </div>
+#         </div>
+#     </div>
+#     """,
+#     unsafe_allow_html=True,
+# )
 
 # ------------------------------------------------------------
 # Access mode
