@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-MASTER_FILE = os.path.join(os.path.dirname(__file__), "data", "MDC_Master_V1.xlsx")
+MASTER_FILE = os.path.join(BASE_DIR, "MDC_Master_V1.xlsx")
 DEMO_INTERNAL_PASSWORD = "MDC@123"  # Change before production.
 
 # ------------------------------------------------------------
