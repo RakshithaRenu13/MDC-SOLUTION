@@ -517,37 +517,25 @@ if cfg is not None:
 # ------------------------------------------------------------
 # 3 Optional accessories
 # ------------------------------------------------------------
-st.header("3. Optional Accessories")
-# st.caption("Select accessories and update quantity. Prices are intentionally not shown here.")
+col1, col2 = st.columns([5, 1.5])
 
-for _, r in accessories_df.iterrows():
-    part = str(r["Part Code"])
-    key_check = f"acc_check_{part}"
-    key_qty = f"acc_qty_{part}"
-
-    selected = st.checkbox(
-        f'{part} — {r["Description"]}',
-        value=st.session_state.accessory_qty.get(part, 0) > 0,
-        key=key_check,
+with col1:
+    # Your existing component selection
+    selected_component = st.checkbox(
+        component_description,
+        key=f"optional_{part}"
     )
 
-    cols = st.columns([8, 1.2, 0.8])
-    # with cols[0]:
-    #     st.caption(f'UOM: {r["UOM"]} | Pricing status: {r["Pricing Status"]}')
-    with cols[1]:
-        if selected:
-            qty = st.number_input(
-                "Quantity",
-                min_value=1,
-                max_value=999,
-                value=max(1, int(st.session_state.accessory_qty.get(part, 1))),
-                step=1,
-                key=key_qty,
-            )
-            st.session_state.accessory_qty[part] = qty
-        else:
-            st.session_state.accessory_qty[part] = 0
-
+with col2:
+    if selected_component:
+        qty = st.number_input(
+            "Quantity",
+            min_value=1,
+            max_value=999,
+            value=1,
+            step=1,
+            key=f"optional_qty_{part}"
+        )
 # ------------------------------------------------------------
 # 4 PDU selection
 # ------------------------------------------------------------
@@ -558,13 +546,26 @@ pdu_options = [
     for _, r in pdus_df.iterrows()
 ]
 
-selected_pdu = st.selectbox(
-    "Select PDU",
-    ["None"] + pdu_options,
-    index=0
-)
+col1, col2 = st.columns([5, 1.5])
 
-# Reset PDU selection
+with col1:
+    selected_pdu = st.selectbox(
+        "Select PDU",
+        ["None"] + pdu_options,
+        index=0
+    )
+
+with col2:
+    qty = st.number_input(
+        "Quantity",
+        min_value=1,
+        max_value=999,
+        value=1,
+        step=1,
+        key="pdu_quantity"
+    )
+
+# Reset PDU quantity dictionary
 st.session_state.pdu_qty = {}
 
 if selected_pdu != "None":
@@ -573,14 +574,6 @@ if selected_pdu != "None":
     selected_row = pdus_df.iloc[selected_index]
 
     part = str(selected_row["Part Code"])
-
-    qty = st.number_input(
-        "PDU Quantity",
-        min_value=1,
-        max_value=999,
-        value=1,
-        step=1
-    )
 
     st.session_state.pdu_qty[part] = qty
 
