@@ -632,7 +632,7 @@ bom = build_bom()
 
 if not bom.empty:
     structure = bom[[
-        "S.No.", "Component Type", "Part Code", "Description", "Quantity", "UOM"
+        "S.No.", "Part Code", "Description", "Quantity", "UOM"
     ]].copy()
     st.dataframe(structure, use_container_width=True, hide_index=True)
 else:
@@ -714,7 +714,7 @@ if not bom.empty:
     )
 
     display = bom_with_price[[
-        "S.No.", "Component Type", "Part Code", "Description", "Quantity",
+        "S.No.",  "Part Code", "Description", "Quantity",
         "UOM", "Unit Price", "Total Price"
     ]].copy()
 
