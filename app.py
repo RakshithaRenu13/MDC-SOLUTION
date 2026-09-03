@@ -139,7 +139,7 @@ def build_bom():
                 "Source": "Optional Accessory",
             })
 
-    # PDU
+    # 
     for _, r in pdus_df.iterrows():
         part = str(r["Part Code"])
         qty = float(st.session_state.pdu_qty.get(part, 0))
@@ -559,7 +559,7 @@ for _, r in pdus_df.iterrows():
     key_check = f"pdu_check_{part}"
     key_qty = f"pdu_qty_{part}"
 
-    selected = st.checkbox(
+    selected = st.selectbox(
         f'{part} — {r["Description"]}',
         value=st.session_state.pdu_qty.get(part, 0) > 0,
         key=key_check,
