@@ -518,40 +518,34 @@ if cfg is not None:
 # 3 Optional accessories
 # ------------------------------------------------------------
 st.header("3. Optional Accessories")
-# st.caption("Select accessories and update quantity. Prices are intentionally not shown here.")
 
 for _, r in accessories_df.iterrows():
     part = str(r["Part Code"])
     key_check = f"acc_check_{part}"
     key_qty = f"acc_qty_{part}"
 
-    cols = st.columns([6, 2, 2])
+    col1, col2 = st.columns([5.5, 1.8], vertical_alignment="center")
 
-    # Component selection
-    with cols[0]:
+    with col1:
         selected = st.checkbox(
             f'{part} — {r["Description"]}',
             value=st.session_state.accessory_qty.get(part, 0) > 0,
-            key=key_check,
+            key=key_check
         )
 
-    # Quantity selection beside component
-    with cols[1]:
+    with col2:
         if selected:
             qty = st.number_input(
                 "Quantity",
                 min_value=1,
-                max_value=999,
-                value=max(
-                    1,
-                    int(st.session_state.accessory_qty.get(part, 1))
-                ),
                 step=1,
+                value=st.session_state.accessory_qty.get(part, 1),
                 key=key_qty,
+                label_visibility="visible"
             )
             st.session_state.accessory_qty[part] = qty
         else:
-            st.session_state.accessory_qty[part] = 0
+            st.session_state.accessory_qty.pop(part, None)
 # ------------------------------------------------------------
 # 4 PDU selection
 # ------------------------------------------------------------
