@@ -501,7 +501,7 @@ cfg = selected_config_record()
 if cfg is not None:
     if cfg["Status"] == "REAL DATA":
         st.success(
-            f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
+            f'**Selected Configuration: {cfg["Configuration"]} — {cfg["1SR-", "Configuration Title"]}**'
         )
     else:
         st.warning(
