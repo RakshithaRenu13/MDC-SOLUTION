@@ -508,17 +508,17 @@ if cfg is not None:
             f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
         )
 
-if not is_internal:
-    st.caption(
-        "Sales can select Single Rack/Multirack and the required configuration. "
-        "Internal cost information remains hidden."
-    )
+# if not is_internal:
+#     st.caption(
+#         "Sales can select Single Rack/Multirack and the required configuration. "
+#         "Internal cost information remains hidden."
+#     )
 
 # ------------------------------------------------------------
 # 3 Optional accessories
 # ------------------------------------------------------------
 st.header("3. Optional Accessories")
-st.caption("Select accessories and update quantity. Prices are intentionally not shown here.")
+# st.caption("Select accessories and update quantity. Prices are intentionally not shown here.")
 
 for _, r in accessories_df.iterrows():
     part = str(r["Part Code"])
@@ -552,7 +552,7 @@ for _, r in accessories_df.iterrows():
 # 4 PDU selection
 # ------------------------------------------------------------
 st.header("4. PDU Selection")
-st.caption("Select PDU components and update quantity. Prices are intentionally not shown here.")
+# st.caption("Select PDU components and update quantity. Prices are intentionally not shown here.")
 
 for _, r in pdus_df.iterrows():
     part = str(r["Part Code"])
@@ -622,7 +622,7 @@ if is_internal:
     with d:
         price_box("Total Cost", total_cost)
 
-    st.header("7. Cost to Selling Price — Internal Only")
+    st.header("7. Cost to Selling Price")
 
     p1, p2, p3, p4 = st.columns(4)
     with p1:
@@ -691,8 +691,8 @@ if not bom.empty:
     known = bom_with_price["Total Price"].dropna().sum()
     price_box("BOM Selling Value", float(known))
 
-    if not is_internal:
-        st.caption("Sales view contains selling prices only. Internal unit cost and total cost are not displayed.")
+    # if not is_internal:
+    #     st.caption("Sales view contains selling prices only. Internal unit cost and total cost are not displayed.")
 else:
     bom_with_price = bom
     st.info("No BOM available.")
