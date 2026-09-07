@@ -929,7 +929,7 @@ if not bom.empty:
         # 801401745 -> 2.3
         # ----------------------------------------------------
 
-        if part_code in COOLING_PART_CODES:
+        if component_type == "Cooling Unit":
 
             cooling_started = True
             cooling_sub_no += 1
@@ -1161,7 +1161,7 @@ if not bom.empty:
         # ----------------------------------------------------
 
         if (
-            part_code in COOLING_PART_CODES
+            component_type == "Cooling Unit"
             and not cooling_heading_added
         ):
 
