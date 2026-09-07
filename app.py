@@ -114,10 +114,26 @@ DEMO_INTERNAL_PASSWORD = "MDC@123"  # Change before production.
 # ------------------------------------------------------------
 @st.cache_data
 def load_master():
-    configs = pd.read_excel(MASTER_FILE, sheet_name="Configurations")
-    components = pd.read_excel(MASTER_FILE, sheet_name="Components")
-    accessories = pd.read_excel(MASTER_FILE, sheet_name="Accessories")
-    pdus = pd.read_excel(MASTER_FILE, sheet_name="PDUs")
+    configs = pd.read_excel(
+        MASTER_FILE,
+        sheet_name="Configurations",
+    )
+
+    components = pd.read_excel(
+        MASTER_FILE,
+        sheet_name="Components",
+    )
+
+    accessories = pd.read_excel(
+        MASTER_FILE,
+        sheet_name="Accessories",
+    )
+
+    pdus = pd.read_excel(
+        MASTER_FILE,
+        sheet_name="PDUs",
+    )
+
     return configs, components, accessories, pdus
 
 
@@ -149,63 +165,118 @@ for key, value in defaults.items():
         st.session_state[key] = value
 
 
+# ------------------------------------------------------------
+# Currency formatting
+# ------------------------------------------------------------
 def money(value):
     return f"₹ {value:,.2f}"
 
 
+# ------------------------------------------------------------
+# Price box
+# ------------------------------------------------------------
 def price_box(label, value):
     st.markdown(
         f"""
-        <div style="padding:4px 0 12px 0; min-height:82px; overflow:visible;">
-            <div style="font-size:16px; color:#4b5563; margin-bottom:7px;">
+        <div style="
+            padding:4px 0 12px 0;
+            min-height:82px;
+            overflow:visible;
+        ">
+
+            <div style="
+                font-size:16px;
+                color:#4b5563;
+                margin-bottom:7px;
+            ">
                 {label}
             </div>
-            <div style="font-size:30px; font-weight:600; color:#30333d;
-                        white-space:nowrap; overflow:visible;">
+
+            <div style="
+                font-size:30px;
+                font-weight:600;
+                color:#30333d;
+                white-space:nowrap;
+                overflow:visible;
+            ">
                 {money(value)}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
+# ------------------------------------------------------------
+# Internal password
+# ------------------------------------------------------------
 def internal_password():
-    # Streamlit Cloud / deployment can use st.secrets["MDC_INTERNAL_PASSWORD"].
+
+    # Streamlit Cloud / deployment can use
+    # st.secrets["MDC_INTERNAL_PASSWORD"].
+
     try:
         return st.secrets["MDC_INTERNAL_PASSWORD"]
+
     except Exception:
         return DEMO_INTERNAL_PASSWORD
 
 
+# ------------------------------------------------------------
+# Selected configuration
+# ------------------------------------------------------------
 def selected_config_record():
+
     match = configs_df[
         (configs_df["MDC Type"] == st.session_state.mdc_type)
-        & (configs_df["Configuration"] == st.session_state.configuration)
+        & (
+            configs_df["Configuration"]
+            == st.session_state.configuration
+        )
     ]
 
     return match.iloc[0] if not match.empty else None
 
 
+# ------------------------------------------------------------
+# Selected components
+# ------------------------------------------------------------
 def selected_components():
+
     return components_df[
         (components_df["MDC Type"] == st.session_state.mdc_type)
-        & (components_df["Configuration"] == st.session_state.configuration)
+        & (
+            components_df["Configuration"]
+            == st.session_state.configuration
+        )
     ].copy()
 
 
+# ------------------------------------------------------------
+# Build BOM
+# ------------------------------------------------------------
 def build_bom():
+
     rows = []
 
+    # ========================================================
     # Configuration BOM
+    # ========================================================
+
     for _, r in selected_components().iterrows():
+
         cost = r["Unit Cost"]
         qty = float(r["Quantity"])
 
         rows.append(
             {
                 "S.No.": len(rows) + 1,
-                "Component Type": "Base (Configuration)",
+
+                "Component Type": (
+                    "Base (Configuration)"
+                ),
+
                 "Part Code": (
                     r["Part Code"]
                     if pd.notna(r["Part Code"])
@@ -213,67 +284,132 @@ def build_bom():
                     and str(r["Part Code"]).lower() != "nan"
                     else ""
                 ),
+
                 "Description": r["Description"],
+
                 "Quantity": qty,
+
                 "UOM": r["UOM"],
+
                 "Unit Cost": cost,
-                "Total Cost": cost * qty if pd.notna(cost) else None,
+
+                "Total Cost": (
+                    cost * qty
+                    if pd.notna(cost)
+                    else None
+                ),
+
                 "Source": "Configuration",
             }
         )
 
+    # ========================================================
     # Optional accessories
+    # ========================================================
+
     for _, r in accessories_df.iterrows():
+
         part = str(r["Part Code"])
-        qty = float(st.session_state.accessory_qty.get(part, 0))
+
+        qty = float(
+            st.session_state.accessory_qty.get(
+                part,
+                0,
+            )
+        )
 
         if qty > 0:
+
             cost = r["Unit Cost"]
 
             rows.append(
                 {
                     "S.No.": len(rows) + 1,
-                    "Component Type": "Optional Accessory",
+
+                    "Component Type": (
+                        "Optional Accessory"
+                    ),
+
                     "Part Code": (
                         part
-                        if part.strip() and part.lower() != "nan"
+                        if part.strip()
+                        and part.lower() != "nan"
                         else ""
                     ),
+
                     "Description": r["Description"],
+
                     "Quantity": qty,
+
                     "UOM": r["UOM"],
+
                     "Unit Cost": cost,
-                    "Total Cost": cost * qty if pd.notna(cost) else None,
-                    "Source": "Optional Accessory",
+
+                    "Total Cost": (
+                        cost * qty
+                        if pd.notna(cost)
+                        else None
+                    ),
+
+                    "Source": (
+                        "Optional Accessory"
+                    ),
                 }
             )
 
-    # 
+    # ========================================================
+    # PDU
+    # ========================================================
+
     for _, r in pdus_df.iterrows():
+
         part = str(r["Part Code"])
-        qty = float(st.session_state.pdu_qty.get(part, 0))
+
+        qty = float(
+            st.session_state.pdu_qty.get(
+                part,
+                0,
+            )
+        )
 
         if qty > 0:
+
             cost = r["Unit Cost"]
+
             desc = (
-                f'{r["Description"]} | Type: {r["Type"]} | '
-                f'C13: {r["C13"]} | C19: {r["C19"]}'
+                f'{r["Description"]} | '
+                f'Type: {r["Type"]} | '
+                f'C13: {r["C13"]} | '
+                f'C19: {r["C19"]}'
             )
 
             rows.append(
                 {
                     "S.No.": len(rows) + 1,
+
                     "Component Type": "PDU",
+
                     "Part Code": (
                         part
-                        if part.strip() and part.lower() != "nan"
+                        if part.strip()
+                        and part.lower() != "nan"
                         else ""
                     ),
+
                     "Description": desc,
+
                     "Quantity": qty,
+
                     "UOM": r["UOM"],
+
                     "Unit Cost": cost,
-                    "Total Cost": cost * qty if pd.notna(cost) else None,
+
+                    "Total Cost": (
+                        cost * qty
+                        if pd.notna(cost)
+                        else None
+                    ),
+
                     "Source": "PDU",
                 }
             )
@@ -281,12 +417,19 @@ def build_bom():
     return pd.DataFrame(rows)
 
 
+# ------------------------------------------------------------
+# Cost summary
+# ------------------------------------------------------------
 def cost_summary(bom):
+
     cfg = selected_config_record()
 
     base_cost = (
         float(cfg["Base Cost"])
-        if cfg is not None and pd.notna(cfg["Base Cost"])
+        if (
+            cfg is not None
+            and pd.notna(cfg["Base Cost"])
+        )
         else 0.0
     )
 
@@ -294,6 +437,7 @@ def cost_summary(bom):
     pdu_cost = 0.0
 
     if not bom.empty:
+
         optional_cost = float(
             bom.loc[
                 bom["Source"] == "Optional Accessory",
@@ -312,11 +456,23 @@ def cost_summary(bom):
             .sum()
         )
 
-    total_cost = base_cost + optional_cost + pdu_cost
+    total_cost = (
+        base_cost
+        + optional_cost
+        + pdu_cost
+    )
 
-    return base_cost, optional_cost, pdu_cost, total_cost
+    return (
+        base_cost,
+        optional_cost,
+        pdu_cost,
+        total_cost,
+    )
 
 
+# ------------------------------------------------------------
+# Add selling prices
+# ------------------------------------------------------------
 def add_selling_prices(
     bom,
     total_cost,
@@ -324,6 +480,7 @@ def add_selling_prices(
     freight,
     installation,
 ):
+
     result = bom.copy()
 
     # Cost-based margin conversion.
@@ -333,17 +490,27 @@ def add_selling_prices(
         else 0
     )
 
-    final_selling_price = margin_price + freight + installation
+    final_selling_price = (
+        margin_price
+        + freight
+        + installation
+    )
 
-    # Allocate the final selling price proportionally to known-cost BOM lines.
-    # This makes BOM Total Price reconcile to the final selling price.
+    # Allocate the final selling price
+    # proportionally to known-cost BOM lines.
+    # This makes BOM Total Price reconcile
+    # to the final selling price.
+
     known_cost_total = (
-        result["Total Cost"].fillna(0).sum()
+        result["Total Cost"]
+        .fillna(0)
+        .sum()
         if not result.empty
         else 0
     )
 
     if known_cost_total > 0:
+
         result["Total Price"] = (
             result["Total Cost"].fillna(0)
             / known_cost_total
@@ -351,37 +518,79 @@ def add_selling_prices(
         )
 
         result["Unit Price"] = (
-            result["Total Price"] / result["Quantity"]
+            result["Total Price"]
+            / result["Quantity"]
         )
 
     else:
+
         result["Total Price"] = pd.NA
         result["Unit Price"] = pd.NA
 
-    return result, margin_price, final_selling_price
+    return (
+        result,
+        margin_price,
+        final_selling_price,
+    )
 
 
+# ------------------------------------------------------------
+# Customer table
+# ------------------------------------------------------------
 def customer_table():
+
     return pd.DataFrame(
         [
-            ["Customer Name", st.session_state.customer_name],
-            ["Customer Place", st.session_state.customer_place],
-            ["Problem Description", st.session_state.problem],
-            ["Solution", st.session_state.solution],
-            ["MDC Type", st.session_state.mdc_type],
-            ["Configuration", st.session_state.configuration],
+            [
+                "Customer Name",
+                st.session_state.customer_name,
+            ],
+            [
+                "Customer Place",
+                st.session_state.customer_place,
+            ],
+            [
+                "Problem Description",
+                st.session_state.problem,
+            ],
+            [
+                "Solution",
+                st.session_state.solution,
+            ],
+            [
+                "MDC Type",
+                st.session_state.mdc_type,
+            ],
+            [
+                "Configuration",
+                st.session_state.configuration,
+            ],
         ],
         columns=["Field", "Value"],
     )
 
 
-```python
+# ============================================================
+# EXCEL GENERATION
+# ============================================================
+#
+# IMPORTANT:
+# Do NOT manually create/remove worksheets here.
+#
+# pandas creates the first visible worksheet when
+# customer_table().to_excel() is executed.
+#
+# This fixes:
+# IndexError: At least one sheet must be visible
+# ============================================================
+
 def excel_bytes(
     internal=False,
     bom=None,
     cost_data=None,
     final_selling_price=0.0,
 ):
+
     output = BytesIO()
 
     cust = customer_table()
@@ -392,6 +601,7 @@ def excel_bytes(
     # --------------------------------------------------------
     # Create ONE combined Excel sheet only
     # --------------------------------------------------------
+
     with pd.ExcelWriter(
         output,
         engine="openpyxl",
@@ -400,26 +610,14 @@ def excel_bytes(
         sheet_name = "MDC Solution"
 
         # ====================================================
-        # IMPORTANT:
-        # Create the worksheet explicitly first.
-        # This prevents:
-        # IndexError: At least one sheet must be visible
-        # ====================================================
-        writer.book.create_sheet(sheet_name)
-
-        # Remove the default active sheet if one was created
-        # automatically and is different from our sheet.
-        for ws in list(writer.book.worksheets):
-            if ws.title != sheet_name:
-                writer.book.remove(ws)
-
-        # Make MDC Solution the active sheet
-        writer.book.active = 0
-
-        # ====================================================
         # CUSTOMER DETAILS & CONFIGURATION
         # ====================================================
+
         start_row = 0
+
+        # IMPORTANT:
+        # Let pandas create the worksheet itself.
+        # Do NOT manually create/remove worksheets.
 
         cust.to_excel(
             writer,
@@ -433,11 +631,13 @@ def excel_bytes(
         # ====================================================
         # INTERNAL EXCEL
         # ====================================================
+
         if internal:
 
             # -------------------------------
             # Internal Cost BOM
             # -------------------------------
+
             pd.DataFrame(
                 [["INTERNAL COST BOM"]],
                 columns=["Section"],
@@ -463,7 +663,9 @@ def excel_bytes(
                 "Total Price",
             ]
 
-            internal_bom = bom[internal_cols].copy()
+            internal_bom = bom[
+                internal_cols
+            ].copy()
 
             internal_bom.to_excel(
                 writer,
@@ -472,11 +674,15 @@ def excel_bytes(
                 startrow=start_row,
             )
 
-            start_row += len(internal_bom) + 3
+            start_row += (
+                len(internal_bom)
+                + 3
+            )
 
             # -------------------------------
             # Cost Summary
             # -------------------------------
+
             pd.DataFrame(
                 [["COST SUMMARY"]],
                 columns=["Section"],
@@ -492,20 +698,31 @@ def excel_bytes(
             summary_data = []
 
             if cost_data is not None:
-                summary_data.extend(cost_data)
+                summary_data.extend(
+                    cost_data
+                )
 
             # Ensure Final Selling Price is included
+
             if not any(
-                str(row[0]).strip().lower() == "final selling price"
+                str(row[0]).strip().lower()
+                == "final selling price"
                 for row in summary_data
             ):
+
                 summary_data.append(
-                    ["Final Selling Price", final_selling_price]
+                    [
+                        "Final Selling Price",
+                        final_selling_price,
+                    ]
                 )
 
             summary_df = pd.DataFrame(
                 summary_data,
-                columns=["Item", "Value"],
+                columns=[
+                    "Item",
+                    "Value",
+                ],
             )
 
             summary_df.to_excel(
@@ -518,11 +735,13 @@ def excel_bytes(
         # ====================================================
         # SALES EXCEL
         # ====================================================
+
         else:
 
             # -------------------------------
             # Final BOM
             # -------------------------------
+
             pd.DataFrame(
                 [["FINAL BOM"]],
                 columns=["Section"],
@@ -546,7 +765,9 @@ def excel_bytes(
                 "Total Price",
             ]
 
-            sales_bom = bom[sales_cols].copy()
+            sales_bom = bom[
+                sales_cols
+            ].copy()
 
             sales_bom.to_excel(
                 writer,
@@ -555,16 +776,26 @@ def excel_bytes(
                 startrow=start_row,
             )
 
-            start_row += len(sales_bom) + 3
+            start_row += (
+                len(sales_bom)
+                + 3
+            )
 
             # -------------------------------
             # Final Selling Price
             # -------------------------------
+
             pd.DataFrame(
                 [
-                    ["FINAL SELLING PRICE", final_selling_price]
+                    [
+                        "FINAL SELLING PRICE",
+                        final_selling_price,
+                    ]
                 ],
-                columns=["Item", "Value"],
+                columns=[
+                    "Item",
+                    "Value",
+                ],
             ).to_excel(
                 writer,
                 index=False,
@@ -575,8 +806,6 @@ def excel_bytes(
     output.seek(0)
 
     return output
-```
-
 
 
 # ------------------------------------------------------------
@@ -597,11 +826,17 @@ def excel_bytes(
 st.html(
     """
     <div style="
-        background: linear-gradient(135deg, #005EB8, #003B71);
+        background: linear-gradient(
+            135deg,
+            #005EB8,
+            #003B71
+        );
         padding: 22px 30px;
         border-radius: 10px;
         margin-bottom: 25px;
-        box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
+        box-shadow:
+            0 4px 12px
+            rgba(0, 59, 113, 0.18);
     ">
 
         <div style="
@@ -620,7 +855,8 @@ st.html(
             font-weight: 400;
             margin-top: 7px;
         ">
-            Modular Data Center Solution Configuration &amp; Pricing
+            Modular Data Center Solution
+            Configuration &amp; Pricing
         </div>
 
     </div>
@@ -631,16 +867,26 @@ st.html(
 # ------------------------------------------------------------
 # Access mode
 # ------------------------------------------------------------
+
 with st.sidebar:
+
     st.header("User Access")
 
     mode = st.radio(
         "Select User Type",
-        ["Sales", "Internal – MDC"],
-        index=0 if st.session_state.mode == "Sales" else 1,
+        [
+            "Sales",
+            "Internal – MDC",
+        ],
+        index=(
+            0
+            if st.session_state.mode == "Sales"
+            else 1
+        ),
     )
 
     if mode != st.session_state.mode:
+
         st.session_state.mode = mode
 
         if mode == "Sales":
@@ -651,7 +897,10 @@ with st.sidebar:
     if mode == "Internal – MDC":
 
         if not st.session_state.authenticated:
-            st.warning("Internal MDC access requires a password.")
+
+            st.warning(
+                "Internal MDC access requires a password."
+            )
 
             pwd = st.text_input(
                 "MDC Password",
@@ -664,26 +913,37 @@ with st.sidebar:
             ):
 
                 if pwd == internal_password():
+
                     st.session_state.authenticated = True
+
                     st.rerun()
 
                 else:
-                    st.error("Incorrect password.")
+
+                    st.error(
+                        "Incorrect password."
+                    )
 
         else:
-            st.success("Internal mode unlocked.")
+
+            st.success(
+                "Internal mode unlocked."
+            )
 
             if st.button(
                 "Lock Internal Mode",
                 use_container_width=True,
             ):
+
                 st.session_state.authenticated = False
                 st.session_state.mode = "Sales"
+
                 st.rerun()
 
 
 is_internal = (
-    st.session_state.mode == "Internal – MDC"
+    st.session_state.mode
+    == "Internal – MDC"
     and st.session_state.authenticated
 )
 
@@ -691,20 +951,27 @@ is_internal = (
 # ------------------------------------------------------------
 # 1 Customer details
 # ------------------------------------------------------------
+
 st.header("1. Customer Details")
 
 c1, c2 = st.columns(2)
 
 with c1:
-    st.session_state.customer_name = st.text_input(
-        "Customer Name",
-        st.session_state.customer_name,
+
+    st.session_state.customer_name = (
+        st.text_input(
+            "Customer Name",
+            st.session_state.customer_name,
+        )
     )
 
 with c2:
-    st.session_state.customer_place = st.text_input(
-        "Customer Place",
-        st.session_state.customer_place,
+
+    st.session_state.customer_place = (
+        st.text_input(
+            "Customer Place",
+            st.session_state.customer_place,
+        )
     )
 
 st.session_state.problem = st.text_area(
@@ -724,47 +991,70 @@ st.session_state.solution = st.text_area(
 # # 2 MDC Type & Configuration
 # # Both Sales and Internal users can select MDC type/configuration.
 # # ------------------------------------------------------------
- # ============================================================
+
+# ============================================================
 # 2. MDC Type & Configuration
 # ============================================================
 
-st.header("2. MDC Type & Configuration")
+st.header(
+    "2. MDC Type & Configuration"
+)
 
 mdc_type = st.radio(
     "MDC Type",
-    ["Single Rack", "Multirack"],
+    [
+        "Single Rack",
+        "Multirack",
+    ],
     horizontal=True,
     index=(
         0
-        if st.session_state.mdc_type == "Single Rack"
+        if st.session_state.mdc_type
+        == "Single Rack"
         else 1
     ),
 )
 
 if mdc_type != st.session_state.mdc_type:
+
     st.session_state.mdc_type = mdc_type
-    st.session_state.configuration = "Configuration 1"
+
+    st.session_state.configuration = (
+        "Configuration 1"
+    )
+
     st.session_state.accessory_qty = {}
     st.session_state.pdu_qty = {}
 
     st.rerun()
 
+
 available = configs_df[
-    configs_df["MDC Type"] == st.session_state.mdc_type
+    configs_df["MDC Type"]
+    == st.session_state.mdc_type
 ].copy()
 
-labels = available["Configuration"].tolist()
+labels = available[
+    "Configuration"
+].tolist()
 
 if labels:
 
-    st.session_state.configuration = st.selectbox(
-        "Select Configuration",
-        labels,
-        index=(
-            labels.index(st.session_state.configuration)
-            if st.session_state.configuration in labels
-            else 0
-        ),
+    st.session_state.configuration = (
+        st.selectbox(
+            "Select Configuration",
+            labels,
+            index=(
+                labels.index(
+                    st.session_state.configuration
+                )
+                if (
+                    st.session_state.configuration
+                    in labels
+                )
+                else 0
+            ),
+        )
     )
 
 
@@ -775,6 +1065,7 @@ if labels:
 cfg = selected_config_record()
 
 if cfg is not None:
+
     st.markdown(
         f"""
         <div style="
@@ -788,7 +1079,9 @@ if cfg is not None:
             margin-bottom: 10px;
         ">
             Selected Configuration:
-            {cfg["Configuration"]} — {cfg["Configuration Title"]}
+            {cfg["Configuration"]}
+            —
+            {cfg["Configuration Title"]}
         </div>
         """,
         unsafe_allow_html=True,
@@ -798,16 +1091,23 @@ if cfg is not None:
 # ------------------------------------------------------------
 # 3. PDU selection
 # ------------------------------------------------------------
+
 st.header("3. PDU Selection")
 
 pdu_options = [
-    f'{r["Part Code"]} — {r["Description"]}'
+    (
+        f'{r["Part Code"]} — '
+        f'{r["Description"]}'
+    )
     for _, r in pdus_df.iterrows()
 ]
 
-col1, col2 = st.columns([5, 1.5])
+col1, col2 = st.columns(
+    [5, 1.5]
+)
 
 with col1:
+
     selected_pdu = st.selectbox(
         "Select PDU",
         ["None"] + pdu_options,
@@ -815,6 +1115,7 @@ with col1:
     )
 
 with col2:
+
     qty = st.number_input(
         "Quantity",
         min_value=1,
@@ -826,16 +1127,28 @@ with col2:
 
 
 # Reset PDU quantity dictionary
+
 st.session_state.pdu_qty = {}
 
 if selected_pdu != "None":
 
-    selected_index = pdu_options.index(selected_pdu)
-    selected_row = pdus_df.iloc[selected_index]
+    selected_index = (
+        pdu_options.index(
+            selected_pdu
+        )
+    )
 
-    part = str(selected_row["Part Code"])
+    selected_row = pdus_df.iloc[
+        selected_index
+    ]
 
-    st.session_state.pdu_qty[part] = qty
+    part = str(
+        selected_row["Part Code"]
+    )
+
+    st.session_state.pdu_qty[
+        part
+    ] = qty
 
     # st.caption(
     #     f'Type: {selected_row["Type"]} | '
@@ -848,13 +1161,22 @@ if selected_pdu != "None":
 # ------------------------------------------------------------
 # 4. Other accessories
 # ------------------------------------------------------------
+
 st.header("4. Other Accessories")
 
 for _, r in accessories_df.iterrows():
 
-    part = str(r["Part Code"])
-    key_check = f"acc_check_{part}"
-    key_qty = f"acc_qty_{part}"
+    part = str(
+        r["Part Code"]
+    )
+
+    key_check = (
+        f"acc_check_{part}"
+    )
+
+    key_qty = (
+        f"acc_qty_{part}"
+    )
 
     col1, col2 = st.columns(
         [5.5, 1.8],
@@ -862,10 +1184,17 @@ for _, r in accessories_df.iterrows():
     )
 
     with col1:
+
         selected = st.checkbox(
-            f'{part} — {r["Description"]}',
+            (
+                f'{part} — '
+                f'{r["Description"]}'
+            ),
             value=(
-                st.session_state.accessory_qty.get(part, 0) > 0
+                st.session_state
+                .accessory_qty
+                .get(part, 0)
+                > 0
             ),
             key=key_check,
         )
@@ -879,7 +1208,9 @@ for _, r in accessories_df.iterrows():
                 min_value=1,
                 step=1,
                 value=(
-                    st.session_state.accessory_qty.get(
+                    st.session_state
+                    .accessory_qty
+                    .get(
                         part,
                         1,
                     )
@@ -888,9 +1219,12 @@ for _, r in accessories_df.iterrows():
                 label_visibility="visible",
             )
 
-            st.session_state.accessory_qty[part] = qty
+            st.session_state.accessory_qty[
+                part
+            ] = qty
 
         else:
+
             st.session_state.accessory_qty.pop(
                 part,
                 None,
@@ -917,7 +1251,9 @@ for _, r in accessories_df.iterrows():
 # 5. FINAL STRUCTURE
 # ============================================================
 
-st.header("5. Final Structure")
+st.header(
+    "5. Final Structure"
+)
 
 bom = build_bom()
 
@@ -962,27 +1298,40 @@ if not bom.empty:
 
     for _, row in structure.iterrows():
 
-        part_code = str(row["Part Code"]).strip()
-        description = str(row["Description"]).strip()
+        part_code = str(
+            row["Part Code"]
+        ).strip()
+
+        description = str(
+            row["Description"]
+        ).strip()
 
         # ----------------------------------------------------
         # TITLE ROW
         # SINGLE RACK MDC...
         # ----------------------------------------------------
+
         if (
             not main_mdc_found
-            and "SINGLE RACK MDC" in description.upper()
+            and "SINGLE RACK MDC"
+            in description.upper()
         ):
+
             new_serial.append("")
+
             main_mdc_found = True
+
             continue
 
         # ----------------------------------------------------
         # MAIN MDC
         # 801029209 -> 1
         # ----------------------------------------------------
+
         if part_code == MAIN_MDC_PART:
+
             new_serial.append("1")
+
             continue
 
         # ----------------------------------------------------
@@ -991,9 +1340,11 @@ if not bom.empty:
         # 801401726 -> 2.2
         # 801401745 -> 2.3
         # ----------------------------------------------------
+
         if part_code in COOLING_PART_CODES:
 
             cooling_started = True
+
             cooling_sub_no += 1
 
             new_serial.append(
@@ -1006,6 +1357,7 @@ if not bom.empty:
         # MDC COMPONENTS
         # 1.1, 1.2, 1.3 ... 1.17
         # ----------------------------------------------------
+
         if not cooling_started:
 
             mdc_sub_no += 1
@@ -1020,13 +1372,16 @@ if not bom.empty:
         # REMAINING COMPONENTS
         # 3, 4, 5, 6...
         # ----------------------------------------------------
+
         new_serial.append(
             str(remaining_no)
         )
 
         remaining_no += 1
 
-    structure["New S.No."] = new_serial
+    structure[
+        "New S.No."
+    ] = new_serial
 
     # ========================================================
     # HTML TABLE
@@ -1120,73 +1475,116 @@ if not bom.empty:
     <table class="final-structure-table">
 
         <thead>
+
             <tr>
-                <th class="serial">S.No.</th>
-                <th class="part-code">Part Code</th>
-                <th class="description">Description</th>
-                <th class="quantity">Quantity</th>
-                <th class="uom">UOM</th>
+
+                <th class="serial">
+                    S.No.
+                </th>
+
+                <th class="part-code">
+                    Part Code
+                </th>
+
+                <th class="description">
+                    Description
+                </th>
+
+                <th class="quantity">
+                    Quantity
+                </th>
+
+                <th class="uom">
+                    UOM
+                </th>
+
             </tr>
+
         </thead>
 
         <tbody>
     """
 
     cooling_heading_added = False
+
     accessory_heading_added = False
+
     pdu_heading_added = False
 
     for _, row in structure.iterrows():
 
-        part_code = str(row["Part Code"]).strip()
-        description = str(row["Description"]).strip()
-        quantity = str(row["Quantity"]).strip()
-        uom = str(row["UOM"]).strip()
-        source = str(row["Source"]).strip()
-        serial_no = str(row["New S.No."]).strip()
+        part_code = str(
+            row["Part Code"]
+        ).strip()
 
-        # --------------------------------------------------------
+        description = str(
+            row["Description"]
+        ).strip()
+
+        quantity = str(
+            row["Quantity"]
+        ).strip()
+
+        uom = str(
+            row["UOM"]
+        ).strip()
+
+        source = str(
+            row["Source"]
+        ).strip()
+
+        serial_no = str(
+            row["New S.No."]
+        ).strip()
+
+        # ----------------------------------------------------
         # MAIN MDC TITLE
-        # --------------------------------------------------------
+        # ----------------------------------------------------
 
         if (
             serial_no == ""
-            and "SINGLE RACK MDC" in description.upper()
+            and "SINGLE RACK MDC"
+            in description.upper()
         ):
 
             html += f"""
             <tr class="main-mdc-row">
+
                 <td colspan="5">
                     {description}
                 </td>
+
             </tr>
             """
 
             continue
 
-        # --------------------------------------------------------
+        # ----------------------------------------------------
         # COOLING UNIT HEADING
-        # --------------------------------------------------------
+        # ----------------------------------------------------
 
         if (
             source == "Configuration"
-            and part_code in COOLING_PART_CODES
+            and part_code
+            in COOLING_PART_CODES
             and not cooling_heading_added
         ):
 
             html += """
             <tr class="section-heading">
+
                 <td colspan="5">
                     COOLING UNIT
                 </td>
+
             </tr>
             """
 
             cooling_heading_added = True
 
-        # --------------------------------------------------------
+        # ----------------------------------------------------
         # OTHER ACCESSORIES HEADING
-        # --------------------------------------------------------
+        # ----------------------------------------------------
 
         if (
             source == "Optional Accessory"
@@ -1195,17 +1593,19 @@ if not bom.empty:
 
             html += """
             <tr class="section-heading">
+
                 <td colspan="5">
                     OTHER ACCESSORIES
                 </td>
+
             </tr>
             """
 
             accessory_heading_added = True
 
-        # --------------------------------------------------------
+        # ----------------------------------------------------
         # PDU HEADING
-        # --------------------------------------------------------
+        # ----------------------------------------------------
 
         if (
             source == "PDU"
@@ -1214,36 +1614,56 @@ if not bom.empty:
 
             html += """
             <tr class="section-heading">
+
                 <td colspan="5">
                     PDU
                 </td>
+
             </tr>
             """
 
             pdu_heading_added = True
 
-        # --------------------------------------------------------
+        # ----------------------------------------------------
         # NORMAL DATA ROW
-        # --------------------------------------------------------
+        # ----------------------------------------------------
 
         display_part_code = (
             ""
-            if part_code.lower() == "nan"
+            if part_code.lower()
+            == "nan"
             else part_code
         )
 
         html += f"""
         <tr>
-            <td class="serial">{serial_no}</td>
-            <td class="part-code">{display_part_code}</td>
-            <td class="description">{description}</td>
-            <td class="quantity">{quantity}</td>
-            <td class="uom">{uom}</td>
+
+            <td class="serial">
+                {serial_no}
+            </td>
+
+            <td class="part-code">
+                {display_part_code}
+            </td>
+
+            <td class="description">
+                {description}
+            </td>
+
+            <td class="quantity">
+                {quantity}
+            </td>
+
+            <td class="uom">
+                {uom}
+            </td>
+
         </tr>
         """
 
     html += """
         </tbody>
+
     </table>
     """
 
@@ -1256,42 +1676,74 @@ if not bom.empty:
 
 else:
 
-    st.info("No components selected.")
+    st.info(
+        "No components selected."
+    )
 
 
 # ------------------------------------------------------------
 # Cost + selling price - internal only
 # ------------------------------------------------------------
-base_cost, optional_cost, pdu_cost, total_cost = cost_summary(bom)
+
+base_cost, optional_cost, pdu_cost, total_cost = (
+    cost_summary(bom)
+)
 
 margin_pct = st.session_state.margin_pct
+
 freight = st.session_state.freight
+
 installation = st.session_state.installation
-warranty_pct = st.session_state.warranty_pct
+
+warranty_pct = (
+    st.session_state.warranty_pct
+)
+
 
 if is_internal:
 
-    st.header("6. Cost Summary — Internal Only")
+    st.header(
+        "6. Cost Summary — Internal Only"
+    )
 
     a, b, c, d = st.columns(4)
 
     with a:
-        price_box("Base Cost", base_cost)
+
+        price_box(
+            "Base Cost",
+            base_cost,
+        )
 
     with b:
-        price_box("Optional Cost", optional_cost)
+
+        price_box(
+            "Optional Cost",
+            optional_cost,
+        )
 
     with c:
-        price_box("PDU Cost", pdu_cost)
+
+        price_box(
+            "PDU Cost",
+            pdu_cost,
+        )
 
     with d:
-        price_box("Total Cost", total_cost)
 
-    st.header("7. Cost to Selling Price")
+        price_box(
+            "Total Cost",
+            total_cost,
+        )
+
+    st.header(
+        "7. Cost to Selling Price"
+    )
 
     p1, p2, p3, p4 = st.columns(4)
 
     with p1:
+
         margin_pct = st.number_input(
             "Margin (%)",
             0.0,
@@ -1300,9 +1752,12 @@ if is_internal:
             0.5,
         )
 
-        st.session_state.margin_pct = margin_pct
+        st.session_state.margin_pct = (
+            margin_pct
+        )
 
     with p2:
+
         freight = st.number_input(
             "Freight",
             0.0,
@@ -1310,19 +1765,27 @@ if is_internal:
             step=500.0,
         )
 
-        st.session_state.freight = freight
+        st.session_state.freight = (
+            freight
+        )
 
     with p3:
+
         installation = st.number_input(
             "Installation",
             0.0,
-            value=st.session_state.installation,
+            value=(
+                st.session_state.installation
+            ),
             step=500.0,
         )
 
-        st.session_state.installation = installation
+        st.session_state.installation = (
+            installation
+        )
 
     with p4:
+
         warranty_pct = st.number_input(
             "Warranty (%)",
             0.0,
@@ -1331,10 +1794,13 @@ if is_internal:
             0.5,
         )
 
-        st.session_state.warranty_pct = warranty_pct
+        st.session_state.warranty_pct = (
+            warranty_pct
+        )
 
     margin_price = (
-        total_cost / (1 - margin_pct / 100)
+        total_cost
+        / (1 - margin_pct / 100)
         if margin_pct < 100
         else 0
     )
@@ -1353,21 +1819,28 @@ if is_internal:
     a, b, c, d = st.columns(4)
 
     with a:
-        price_box("Margin Price", margin_price)
+
+        price_box(
+            "Margin Price",
+            margin_price,
+        )
 
     with b:
+
         price_box(
             "After Freight",
             margin_price + freight,
         )
 
     with c:
+
         price_box(
             "Final Selling Price",
             final_selling_price,
         )
 
     with d:
+
         price_box(
             "Warranty Amount",
             warranty_amount,
@@ -1377,7 +1850,10 @@ if is_internal:
 # ------------------------------------------------------------
 # 8 Final BOM
 # ------------------------------------------------------------
-st.header("8. Final BOM")
+
+st.header(
+    "8. Final BOM"
+)
 
 if not bom.empty:
 
@@ -1403,19 +1879,23 @@ if not bom.empty:
         ]
     ].copy()
 
-    display["Unit Price"] = display["Unit Price"].apply(
-        lambda x: (
-            money(float(x))
-            if pd.notna(x)
-            else "N/A"
+    display["Unit Price"] = (
+        display["Unit Price"].apply(
+            lambda x: (
+                money(float(x))
+                if pd.notna(x)
+                else "N/A"
+            )
         )
     )
 
-    display["Total Price"] = display["Total Price"].apply(
-        lambda x: (
-            money(float(x))
-            if pd.notna(x)
-            else "N/A"
+    display["Total Price"] = (
+        display["Total Price"].apply(
+            lambda x: (
+                money(float(x))
+                if pd.notna(x)
+                else "N/A"
+            )
         )
     )
 
@@ -1425,7 +1905,13 @@ if not bom.empty:
         hide_index=True,
     )
 
-    known = bom_with_price["Total Price"].dropna().sum()
+    known = (
+        bom_with_price[
+            "Total Price"
+        ]
+        .dropna()
+        .sum()
+    )
 
     price_box(
         "Final Selling Price",
@@ -1439,47 +1925,123 @@ else:
 
     bom_with_price = bom
 
-    st.info("No BOM available.")
+    st.info(
+        "No BOM available."
+    )
 
 
 # ------------------------------------------------------------
 # 9 Excel
 # ------------------------------------------------------------
-st.header("9. Excel Download")
+
+st.header(
+    "9. Excel Download"
+)
 
 if not bom.empty:
 
     internal_cost_data = [
-        ["Base Cost", base_cost],
-        ["Optional Cost", optional_cost],
-        ["PDU Cost", pdu_cost],
-        ["Total Cost", total_cost],
-        ["Margin %", margin_pct],
-        ["Margin Price", margin_price if is_internal else 0],
-        ["Freight", freight if is_internal else 0],
-        ["Installation", installation if is_internal else 0],
+
         [
-            "Final Selling Price",
-            final_selling_price if is_internal else 0,
+            "Base Cost",
+            base_cost,
         ],
-        ["Warranty %", warranty_pct if is_internal else 0],
+
         [
-            "Warranty Amount",
+            "Optional Cost",
+            optional_cost,
+        ],
+
+        [
+            "PDU Cost",
+            pdu_cost,
+        ],
+
+        [
+            "Total Cost",
+            total_cost,
+        ],
+
+        [
+            "Margin %",
+            margin_pct,
+        ],
+
+        [
+            "Margin Price",
             (
-                margin_price * warranty_pct / 100
+                margin_price
                 if is_internal
                 else 0
             ),
         ],
+
+        [
+            "Freight",
+            (
+                freight
+                if is_internal
+                else 0
+            ),
+        ],
+
+        [
+            "Installation",
+            (
+                installation
+                if is_internal
+                else 0
+            ),
+        ],
+
+        [
+            "Final Selling Price",
+            (
+                final_selling_price
+                if is_internal
+                else 0
+            ),
+        ],
+
+        [
+            "Warranty %",
+            (
+                warranty_pct
+                if is_internal
+                else 0
+            ),
+        ],
+
+        [
+            "Warranty Amount",
+            (
+                margin_price
+                * warranty_pct
+                / 100
+                if is_internal
+                else 0
+            ),
+        ],
+
     ]
 
-    # Sales Excel is always safe for both roles.
+    # ========================================================
+    # SALES EXCEL
+    # Always available for Sales and Internal users
+    # ========================================================
+
     sales_file = excel_bytes(
         internal=False,
         bom=bom_with_price,
         cost_data=None,
-        final_selling_price=final_selling_price,
+        final_selling_price=(
+            final_selling_price
+        ),
     )
+
+    # ========================================================
+    # INTERNAL USER
+    # ========================================================
 
     if is_internal:
 
@@ -1490,47 +2052,77 @@ if not bom.empty:
         col1, col2 = st.columns(2)
 
         with col1:
+
             st.download_button(
                 "⬇️ Download Internal Cost Excel",
+
                 data=excel_bytes(
                     internal=True,
                     bom=bom_with_price,
                     cost_data=internal_cost_data,
-                    final_selling_price=final_selling_price,
+                    final_selling_price=(
+                        final_selling_price
+                    ),
                 ),
-                file_name="MDC_Internal_Cost.xlsx",
+
+                file_name=(
+                    "MDC_Internal_Cost.xlsx"
+                ),
+
                 mime=(
                     "application/vnd.openxmlformats-officedocument."
                     "spreadsheetml.sheet"
                 ),
+
                 use_container_width=True,
             )
 
         with col2:
+
             st.download_button(
                 "⬇️ Download Sales Excel",
+
                 data=sales_file,
-                file_name="MDC_Sales_Output.xlsx",
+
+                file_name=(
+                    "MDC_Sales_Output.xlsx"
+                ),
+
                 mime=(
                     "application/vnd.openxmlformats-officedocument."
                     "spreadsheetml.sheet"
                 ),
+
                 use_container_width=True,
             )
+
+    # ========================================================
+    # SALES USER
+    # ========================================================
 
     else:
 
         st.download_button(
             "⬇️ Download Sales Excel",
+
             data=sales_file,
-            file_name="MDC_Sales_Output.xlsx",
+
+            file_name=(
+                "MDC_Sales_Output.xlsx"
+            ),
+
             mime=(
                 "application/vnd.openxmlformats-officedocument."
                 "spreadsheetml.sheet"
             ),
+
             use_container_width=True,
         )
 
+
+# ------------------------------------------------------------
+# Footer
+# ------------------------------------------------------------
 
 st.divider()
 
