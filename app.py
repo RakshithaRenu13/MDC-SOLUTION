@@ -595,17 +595,24 @@ if not bom.empty:
     cooling_started = False
     cooling_sub_no = 0
 
-    remaining_no = 3
+    accessories_started = False
+    accessory_no = 3
+
+    pdu_started = False
+    pdu_no = 0
 
     for _, row in structure.iterrows():
 
         part_code = str(row["Part Code"]).strip()
         description = str(row["Description"]).strip()
+        component_type = str(
+            bom.loc[row.name, "Component Type"]
+        ).strip()
 
         # ----------------------------------------------------
-        # TITLE ROW
-        # SINGLE RACK MDC...
+        # MAIN MDC TITLE
         # ----------------------------------------------------
+
         if (
             not main_mdc_found
             and "SINGLE RACK MDC" in description.upper()
@@ -618,6 +625,7 @@ if not bom.empty:
         # MAIN MDC
         # 801029209 -> 1
         # ----------------------------------------------------
+
         if part_code == MAIN_MDC_PART:
             new_serial.append("1")
             continue
@@ -628,6 +636,7 @@ if not bom.empty:
         # 801401726 -> 2.2
         # 801401745 -> 2.3
         # ----------------------------------------------------
+
         if part_code in COOLING_PART_CODES:
 
             cooling_started = True
@@ -640,9 +649,51 @@ if not bom.empty:
             continue
 
         # ----------------------------------------------------
+        # OPTIONAL ACCESSORIES
+        # 3, 4, 5, 6...
+        # ----------------------------------------------------
+
+        if component_type == "Optional Accessory":
+
+            accessories_started = True
+
+            new_serial.append(
+                str(accessory_no)
+            )
+
+            accessory_no += 1
+
+            continue
+
+        # ----------------------------------------------------
+        # PDU
+        # Continue numbering after accessories
+        # ----------------------------------------------------
+
+        if component_type == "PDU":
+
+            pdu_started = True
+
+            # If accessories exist:
+            # continue from accessory numbering.
+            #
+            # Example:
+            # Accessories = 3, 4
+            # PDU = 5
+
+            new_serial.append(
+                str(accessory_no)
+            )
+
+            accessory_no += 1
+
+            continue
+
+        # ----------------------------------------------------
         # MDC COMPONENTS
         # 1.1, 1.2, 1.3 ... 1.17
         # ----------------------------------------------------
+
         if not cooling_started:
 
             mdc_sub_no += 1
@@ -654,19 +705,19 @@ if not bom.empty:
             continue
 
         # ----------------------------------------------------
-        # REMAINING COMPONENTS
-        # 3, 4, 5, 6...
+        # FALLBACK
         # ----------------------------------------------------
+
         new_serial.append(
-            str(remaining_no)
+            str(accessory_no)
         )
 
-        remaining_no += 1
+        accessory_no += 1
 
     structure["New S.No."] = new_serial
 
     # ========================================================
-    # HTML TABLE
+    # HTML TABLE CSS
     # ========================================================
 
     html = """
@@ -698,36 +749,37 @@ if not bom.empty:
         vertical-align: middle;
     }
 
-    /* -----------------------------------------------
-       Main MDC Title
-       ----------------------------------------------- */
+    /* ======================================================
+       MAIN MDC TITLE
+       Dark Blue + Centered
+       ====================================================== */
 
     .main-mdc-row td {
-        color: #004B91 !important;
-        background-color: #F7FBFF;
+        background-color: #003B71;
+        color: white !important;
         font-weight: 700;
         font-size: 16px;
         text-align: center !important;
         padding: 15px 10px;
     }
 
-    /* -----------------------------------------------
-       Cooling Unit Heading
-       Eaton Blue
-       ----------------------------------------------- */
+    /* ======================================================
+       SECTION HEADINGS
+       Eaton Blue + Centered
+       ====================================================== */
 
     .section-heading td {
         background-color: #005EB8;
         color: white !important;
         font-weight: 700;
         font-size: 15px;
-        text-align: left !important;
+        text-align: center !important;
         padding: 12px 14px;
     }
 
-    /* -----------------------------------------------
-       Column alignment
-       ----------------------------------------------- */
+    /* ======================================================
+       COLUMN ALIGNMENT
+       ====================================================== */
 
     .serial {
         width: 7%;
@@ -761,7 +813,7 @@ if not bom.empty:
                 <th class="serial">S.No.</th>
                 <th class="part-code">Part Code</th>
                 <th class="description">Description</th>
-                <th class="quantity">Quantity</th>
+                <th class="quantity">Qty</th>
                 <th class="uom">UOM</th>
             </tr>
         </thead>
@@ -769,7 +821,13 @@ if not bom.empty:
         <tbody>
     """
 
+    # ========================================================
+    # SECTION FLAGS
+    # ========================================================
+
     cooling_heading_added = False
+    accessories_heading_added = False
+    pdu_heading_added = False
 
     # ========================================================
     # ADD TABLE ROWS
@@ -783,8 +841,12 @@ if not bom.empty:
         uom = str(row["UOM"]).strip()
         serial_no = str(row["New S.No."]).strip()
 
+        component_type = str(
+            bom.loc[row.name, "Component Type"]
+        ).strip()
+
         # ----------------------------------------------------
-        # MAIN TITLE ROW
+        # MAIN MDC TITLE
         # ----------------------------------------------------
 
         if (
@@ -822,7 +884,45 @@ if not bom.empty:
             cooling_heading_added = True
 
         # ----------------------------------------------------
-        # NORMAL ROW
+        # OTHER ACCESSORIES HEADING
+        # ----------------------------------------------------
+
+        if (
+            component_type == "Optional Accessory"
+            and not accessories_heading_added
+        ):
+
+            html += """
+            <tr class="section-heading">
+                <td colspan="5">
+                    OTHER ACCESSORIES
+                </td>
+            </tr>
+            """
+
+            accessories_heading_added = True
+
+        # ----------------------------------------------------
+        # PDU HEADING
+        # ----------------------------------------------------
+
+        if (
+            component_type == "PDU"
+            and not pdu_heading_added
+        ):
+
+            html += """
+            <tr class="section-heading">
+                <td colspan="5">
+                    PDU
+                </td>
+            </tr>
+            """
+
+            pdu_heading_added = True
+
+        # ----------------------------------------------------
+        # PART CODE
         # ----------------------------------------------------
 
         display_part_code = (
@@ -830,6 +930,10 @@ if not bom.empty:
             if part_code.lower() == "nan"
             else part_code
         )
+
+        # ----------------------------------------------------
+        # NORMAL ROW
+        # ----------------------------------------------------
 
         html += f"""
         <tr>
@@ -847,8 +951,7 @@ if not bom.empty:
     """
 
     # ========================================================
-    # IMPORTANT:
-    # Use st.html(), NOT st.markdown()
+    # DISPLAY HTML TABLE
     # ========================================================
 
     st.html(html)
