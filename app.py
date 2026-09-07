@@ -547,16 +547,314 @@ if selected_pdu != "None":
 # ------------------------------------------------------------
 # 5 Final structure - common to both users
 # ------------------------------------------------------------
+# st.header("5. Final Structure")
+
+# bom = build_bom()
+
+# if not bom.empty:
+#     structure = bom[[
+#         "S.No.", "Component Type", "Part Code", "Description", "Quantity", "UOM"
+#     ]].copy()
+#     st.dataframe(structure, use_container_width=True, hide_index=True)
+# else:
+#     st.info("No components selected.")
+# ============================================================
+# 5. FINAL STRUCTURE
+# ============================================================
 st.header("5. Final Structure")
 
 bom = build_bom()
 
 if not bom.empty:
-    structure = bom[[
-        "S.No.", "Component Type", "Part Code", "Description", "Quantity", "UOM"
-    ]].copy()
-    st.dataframe(structure, use_container_width=True, hide_index=True)
+
+    structure = bom[
+        ["S.No.", "Part Code", "Description", "Quantity", "UOM"]
+    ].copy()
+
+    # ========================================================
+    # SPECIAL PART CODES
+    # ========================================================
+
+    MAIN_MDC_PART = "801029209"
+
+    COOLING_PART_CODES = {
+        "801401725",
+        "801401726",
+        "801401745",
+    }
+
+    # ========================================================
+    # CREATE NEW SERIAL NUMBERS
+    # ========================================================
+
+    new_serial = []
+
+    main_mdc_found = False
+    mdc_sub_no = 0
+
+    cooling_started = False
+    cooling_sub_no = 0
+
+    remaining_no = 3
+
+    for _, row in structure.iterrows():
+
+        part_code = str(row["Part Code"]).strip()
+        description = str(row["Description"]).strip()
+
+        # ----------------------------------------------------
+        # TITLE ROW
+        # SINGLE RACK MDC...
+        # ----------------------------------------------------
+        if (
+            not main_mdc_found
+            and "SINGLE RACK MDC" in description.upper()
+        ):
+            new_serial.append("")
+            main_mdc_found = True
+            continue
+
+        # ----------------------------------------------------
+        # MAIN MDC
+        # 801029209 -> 1
+        # ----------------------------------------------------
+        if part_code == MAIN_MDC_PART:
+            new_serial.append("1")
+            continue
+
+        # ----------------------------------------------------
+        # COOLING UNIT
+        # 801401725 -> 2.1
+        # 801401726 -> 2.2
+        # 801401745 -> 2.3
+        # ----------------------------------------------------
+        if part_code in COOLING_PART_CODES:
+
+            cooling_started = True
+            cooling_sub_no += 1
+
+            new_serial.append(
+                f"2.{cooling_sub_no}"
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # MDC COMPONENTS
+        # 1.1, 1.2, 1.3 ... 1.17
+        # ----------------------------------------------------
+        if not cooling_started:
+
+            mdc_sub_no += 1
+
+            new_serial.append(
+                f"1.{mdc_sub_no}"
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # REMAINING COMPONENTS
+        # 3, 4, 5, 6...
+        # ----------------------------------------------------
+        new_serial.append(
+            str(remaining_no)
+        )
+
+        remaining_no += 1
+
+    structure["New S.No."] = new_serial
+
+    # ========================================================
+    # HTML TABLE
+    # ========================================================
+
+    html = """
+    <style>
+
+    .final-structure-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        border: 1px solid #D9E1E8;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .final-structure-table th {
+        background-color: #F4F6F8;
+        color: #555555;
+        font-weight: 600;
+        text-align: left;
+        padding: 12px 10px;
+        border-bottom: 1px solid #D9E1E8;
+    }
+
+    .final-structure-table td {
+        padding: 11px 10px;
+        border-bottom: 1px solid #E5E7EB;
+        color: #333333;
+        vertical-align: middle;
+    }
+
+    /* -----------------------------------------------
+       Main MDC Title
+       ----------------------------------------------- */
+
+    .main-mdc-row td {
+        color: #004B91 !important;
+        background-color: #F7FBFF;
+        font-weight: 700;
+        font-size: 16px;
+        text-align: center !important;
+        padding: 15px 10px;
+    }
+
+    /* -----------------------------------------------
+       Cooling Unit Heading
+       Eaton Blue
+       ----------------------------------------------- */
+
+    .section-heading td {
+        background-color: #005EB8;
+        color: white !important;
+        font-weight: 700;
+        font-size: 15px;
+        text-align: left !important;
+        padding: 12px 14px;
+    }
+
+    /* -----------------------------------------------
+       Column alignment
+       ----------------------------------------------- */
+
+    .serial {
+        width: 7%;
+        text-align: center !important;
+    }
+
+    .part-code {
+        width: 15%;
+    }
+
+    .description {
+        width: 58%;
+    }
+
+    .quantity {
+        width: 10%;
+        text-align: center !important;
+    }
+
+    .uom {
+        width: 10%;
+        text-align: center !important;
+    }
+
+    </style>
+
+    <table class="final-structure-table">
+
+        <thead>
+            <tr>
+                <th class="serial">S.No.</th>
+                <th class="part-code">Part Code</th>
+                <th class="description">Description</th>
+                <th class="quantity">Quantity</th>
+                <th class="uom">UOM</th>
+            </tr>
+        </thead>
+
+        <tbody>
+    """
+
+    cooling_heading_added = False
+
+    # ========================================================
+    # ADD TABLE ROWS
+    # ========================================================
+
+    for _, row in structure.iterrows():
+
+        part_code = str(row["Part Code"]).strip()
+        description = str(row["Description"]).strip()
+        quantity = str(row["Quantity"]).strip()
+        uom = str(row["UOM"]).strip()
+        serial_no = str(row["New S.No."]).strip()
+
+        # ----------------------------------------------------
+        # MAIN TITLE ROW
+        # ----------------------------------------------------
+
+        if (
+            serial_no == ""
+            and "SINGLE RACK MDC" in description.upper()
+        ):
+
+            html += f"""
+            <tr class="main-mdc-row">
+                <td colspan="5">
+                    {description}
+                </td>
+            </tr>
+            """
+
+            continue
+
+        # ----------------------------------------------------
+        # COOLING UNIT HEADING
+        # ----------------------------------------------------
+
+        if (
+            part_code in COOLING_PART_CODES
+            and not cooling_heading_added
+        ):
+
+            html += """
+            <tr class="section-heading">
+                <td colspan="5">
+                    COOLING UNIT
+                </td>
+            </tr>
+            """
+
+            cooling_heading_added = True
+
+        # ----------------------------------------------------
+        # NORMAL ROW
+        # ----------------------------------------------------
+
+        display_part_code = (
+            ""
+            if part_code.lower() == "nan"
+            else part_code
+        )
+
+        html += f"""
+        <tr>
+            <td class="serial">{serial_no}</td>
+            <td class="part-code">{display_part_code}</td>
+            <td class="description">{description}</td>
+            <td class="quantity">{quantity}</td>
+            <td class="uom">{uom}</td>
+        </tr>
+        """
+
+    html += """
+        </tbody>
+    </table>
+    """
+
+    # ========================================================
+    # IMPORTANT:
+    # Use st.html(), NOT st.markdown()
+    # ========================================================
+
+    st.html(html)
+
 else:
+
     st.info("No components selected.")
 
 # ------------------------------------------------------------
