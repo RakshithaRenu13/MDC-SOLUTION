@@ -1850,16 +1850,16 @@ st.caption(
 )
 ```
 
-### One important deployment change
+# ### One important deployment change
 
-Because this corrected version directly imports `openpyxl`, make sure your `requirements.txt` contains:
+# Because this corrected version directly imports `openpyxl`, make sure your `requirements.txt` contains:
 
-```text
-streamlit
-pandas
-openpyxl
-```
+# ```text
+# streamlit
+# pandas
+# openpyxl
+# ```
 
-Your **Section 8 will now end with the Final BOM table**. There will be **no `₹ 790,698.60` box underneath it**. The Final Selling Price will only appear in **Section 7 for Internal – MDC users**, and it will still be included in the Excel output. The original offending `price_box("BOM Selling Value", ...)` was removed.
+# Your **Section 8 will now end with the Final BOM table**. There will be **no `₹ 790,698.60` box underneath it**. The Final Selling Price will only appear in **Section 7 for Internal – MDC users**, and it will still be included in the Excel output. The original offending `price_box("BOM Selling Value", ...)` was removed.
 
-Also, the Excel function has been changed from the earlier `pd.ExcelWriter(..., engine="openpyxl")` implementation to a direct workbook creation approach, so the previous **“At least one sheet must be visible”** error is avoided.
+# Also, the Excel function has been changed from the earlier `pd.ExcelWriter(..., engine="openpyxl")` implementation to a direct workbook creation approach, so the previous **“At least one sheet must be visible”** error is avoided.
