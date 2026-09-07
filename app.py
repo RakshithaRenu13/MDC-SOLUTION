@@ -937,7 +937,7 @@ if not bom.empty:
         # 801401745 -> 2.3
         # ----------------------------------------------------
 
-       if part_code in cooling_part_codes:
+        if part_code in cooling_part_codes:
 
             cooling_started = True
             cooling_sub_no += 1
