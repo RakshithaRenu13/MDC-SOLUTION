@@ -1035,7 +1035,7 @@ if not bom.empty:
         html += """
         <tr class="section-heading">
             <td colspan="5">
-                PDU
+                PDU 
             </td>
         </tr>
         """
