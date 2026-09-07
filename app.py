@@ -482,29 +482,34 @@ if not is_internal:
 # 3 Optional accessories
 # ------------------------------------------------------------
 st.header("3. Optional Accessories")
-st.caption("Select accessories and update quantity. Prices are intentionally not shown here.")
+# st.caption("Select accessories and update quantity. Prices are intentionally not shown here.")
 
 for _, r in accessories_df.iterrows():
     part = str(r["Part Code"])
     key_check = f"acc_check_{part}"
     key_qty = f"acc_qty_{part}"
 
-    selected = st.checkbox(
-        f'{part} — {r["Description"]}',
-        value=st.session_state.accessory_qty.get(part, 0) > 0,
-        key=key_check,
-    )
+    cols = st.columns([8, 1.5])
 
-    cols = st.columns([6, 2, 2])
+    # Component selection
     with cols[0]:
-        st.caption(f'UOM: {r["UOM"]} | Pricing status: {r["Pricing Status"]}')
+        selected = st.checkbox(
+            f'{part} — {r["Description"]}',
+            value=st.session_state.accessory_qty.get(part, 0) > 0,
+            key=key_check,
+        )
+
+    # Quantity selection beside component
     with cols[1]:
         if selected:
             qty = st.number_input(
                 "Quantity",
                 min_value=1,
                 max_value=999,
-                value=max(1, int(st.session_state.accessory_qty.get(part, 1))),
+                value=max(
+                    1,
+                    int(st.session_state.accessory_qty.get(part, 1))
+                ),
                 step=1,
                 key=key_qty,
             )
