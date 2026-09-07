@@ -602,35 +602,34 @@ st.html("""
 # CONFIGURATION TRACKING ID
 # ============================================================
 
-st.markdown(
-    f"""
-    <div style="
-        background:#F7FBFF;
-        border:1px solid #B8D8F5;
-        border-left:6px solid #005EB8;
-        border-radius:8px;
-        padding:12px 18px;
-        margin-bottom:20px;
-    ">
-        <div style="
-            font-size:13px;
-            color:#64748B;
-            margin-bottom:3px;
-        ">
-            Configuration ID
-        </div>
+st.html(f"""
+<div style="
+    background-color:#F7FBFF;
+    border:1px solid #B8D8F5;
+    border-left:6px solid #005EB8;
+    border-radius:8px;
+    padding:12px 18px;
+    margin:0 0 20px 0;
+">
 
-        <div style="
-            font-size:20px;
-            font-weight:700;
-            color:#003B71;
-        ">
-            {st.session_state.configuration_id}
-        </div>
+    <div style="
+        font-size:13px;
+        color:#64748B;
+        margin-bottom:4px;
+    ">
+        Configuration ID
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+
+    <div style="
+        font-size:20px;
+        font-weight:700;
+        color:#003B71;
+    ">
+        {st.session_state.configuration_id}
+    </div>
+
+</div>
+""")
 # ------------------------------------------------------------
 # Access mode
 # ------------------------------------------------------------
