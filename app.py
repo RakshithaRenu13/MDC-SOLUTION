@@ -748,73 +748,98 @@ if not bom.empty:
     ].copy()
 
     # --------------------------------------------------------
-    # Create custom serial numbering
+    # Identify cooling unit part codes
+    # --------------------------------------------------------
+    cooling_part_codes = {
+        "801401725",
+        "801401726",
+        "801401745",
+    }
+
+    # --------------------------------------------------------
+    # Create new hierarchical serial numbers
     # --------------------------------------------------------
     new_serial = []
-    cooling_unit_started = False
-    main_item_found = False
-    sub_no = 0
-    other_no = 3
+
+    mdc_main_found = False
+    mdc_sub_no = 0
+    cooling_started = False
+    cooling_sub_no = 0
+    remaining_no = 3
 
     for _, row in structure.iterrows():
 
-        sno = row["S.No."]
+        part_code = str(row["Part Code"]).strip()
+        description = str(row["Description"]).strip()
 
         # ----------------------------------------------------
-        # First item:
+        # FIRST ROW:
         # SINGLE RACK MDC, 3.5kW Cooling Unit...
         # No serial number
         # ----------------------------------------------------
-        if str(sno) == "1":
+        if (
+            not mdc_main_found
+            and "SINGLE RACK MDC" in description.upper()
+        ):
             new_serial.append("")
-            main_item_found = True
+            mdc_main_found = True
             continue
 
         # ----------------------------------------------------
-        # Main MDC item:
-        # 801029209 -> Serial No. 1
+        # MAIN MDC:
+        # 801029209 -> 1
         # ----------------------------------------------------
-        if str(sno) == "2":
+        if part_code == "801029209":
             new_serial.append("1")
-            sub_no = 0
             continue
 
         # ----------------------------------------------------
-        # Items 3 to 19 -> 1.1, 1.2, 1.3...
+        # COOLING UNIT:
+        # 801401725 -> 2.1
+        # 801401726 -> 2.2
+        # 801401745 -> 2.3
         # ----------------------------------------------------
-        if not cooling_unit_started and str(sno) not in ["20", "21", "22", "23"]:
-            sub_no += 1
-            new_serial.append(f"1.{sub_no}")
+        if part_code in cooling_part_codes:
+
+            cooling_started = True
+            cooling_sub_no += 1
+
+            new_serial.append(
+                f"2.{cooling_sub_no}"
+            )
+
             continue
 
         # ----------------------------------------------------
-        # Items 20, 21, 22 -> Cooling Unit section
-        # 2.1, 2.2, 2.3
+        # MDC COMPONENTS BEFORE COOLING UNIT
+        # -> 1.1, 1.2, 1.3 ... 1.17
         # ----------------------------------------------------
-        if str(sno) in ["20", "21", "22"]:
-            cooling_unit_started = True
+        if not cooling_started:
 
-            # 20 -> 2.1
-            # 21 -> 2.2
-            # 22 -> 2.3
-            cooling_sub_no = int(str(sno)) - 19
-            new_serial.append(f"2.{cooling_sub_no}")
+            mdc_sub_no += 1
+
+            new_serial.append(
+                f"1.{mdc_sub_no}"
+            )
+
             continue
 
         # ----------------------------------------------------
-        # Remaining components:
-        # 23 -> 3
-        # next -> 4
-        # next -> 5 ...
+        # ALL COMPONENTS AFTER COOLING UNIT
+        # -> 3, 4, 5, 6...
         # ----------------------------------------------------
-        new_serial.append(str(other_no))
-        other_no += 1
+        new_serial.append(
+            str(remaining_no)
+        )
+
+        remaining_no += 1
 
     structure["New S.No."] = new_serial
 
-    # --------------------------------------------------------
-    # Build HTML table
-    # --------------------------------------------------------
+    # ========================================================
+    # HTML TABLE
+    # ========================================================
+
     html = """
     <style>
 
@@ -849,28 +874,40 @@ if not bom.empty:
         border-bottom: none;
     }
 
-    /* Main MDC heading */
+    /* =====================================================
+       SINGLE RACK MDC TITLE
+       ===================================================== */
+
     .main-mdc-row td {
-        color: #004b87 !important;
+        color: #004B87 !important;
         font-weight: 700;
         text-align: center !important;
         font-size: 15px;
-        background-color: #f8fbff;
+        background-color: #F8FBFF;
+        padding: 14px 10px;
     }
 
-    /* Eaton blue section heading */
+    /* =====================================================
+       COOLING UNIT HEADING
+       Eaton Blue
+       ===================================================== */
+
     .section-heading td {
-        background-color: #005eb8;
-        color: white !important;
+        background-color: #005EB8;
+        color: #FFFFFF !important;
         font-weight: 700;
         font-size: 15px;
-        text-align: left;
+        text-align: left !important;
         padding: 12px 14px;
     }
 
+    /* =====================================================
+       COLUMN WIDTHS
+       ===================================================== */
+
     .serial {
         width: 7%;
-        text-align: center;
+        text-align: center !important;
     }
 
     .part-code {
@@ -883,17 +920,18 @@ if not bom.empty:
 
     .quantity {
         width: 10%;
-        text-align: center;
+        text-align: center !important;
     }
 
     .uom {
         width: 10%;
-        text-align: center;
+        text-align: center !important;
     }
 
     </style>
 
     <table class="final-structure-table">
+
         <thead>
             <tr>
                 <th class="serial">S.No.</th>
@@ -903,26 +941,32 @@ if not bom.empty:
                 <th class="uom">UOM</th>
             </tr>
         </thead>
+
         <tbody>
     """
 
     cooling_heading_added = False
 
-    for i, (_, row) in enumerate(structure.iterrows()):
+    # ========================================================
+    # CREATE TABLE ROWS
+    # ========================================================
 
-        sno = str(row["S.No."])
-        new_sno = row["New S.No."]
+    for _, row in structure.iterrows():
 
-        part_code = str(row["Part Code"])
-        description = str(row["Description"])
-        quantity = str(row["Quantity"])
-        uom = str(row["UOM"])
+        part_code = str(row["Part Code"]).strip()
+        description = str(row["Description"]).strip()
+        quantity = str(row["Quantity"]).strip()
+        uom = str(row["UOM"]).strip()
+        new_sno = str(row["New S.No."]).strip()
 
         # ----------------------------------------------------
-        # First row - no serial number
-        # Dark blue + centered
+        # SINGLE RACK MDC TITLE
         # ----------------------------------------------------
-        if sno == "1":
+        if (
+            new_sno == ""
+            and "SINGLE RACK MDC" in description.upper()
+        ):
+
             html += f"""
             <tr class="main-mdc-row">
                 <td colspan="5">
@@ -930,12 +974,18 @@ if not bom.empty:
                 </td>
             </tr>
             """
+
             continue
 
         # ----------------------------------------------------
-        # Add COOLING UNIT heading before 20
+        # COOLING UNIT HEADING
+        # Add before 2.1
         # ----------------------------------------------------
-        if sno == "20" and not cooling_heading_added:
+        if (
+            part_code in cooling_part_codes
+            and not cooling_heading_added
+        ):
+
             html += """
             <tr class="section-heading">
                 <td colspan="5">
@@ -943,15 +993,16 @@ if not bom.empty:
                 </td>
             </tr>
             """
+
             cooling_heading_added = True
 
         # ----------------------------------------------------
-        # Normal row
+        # NORMAL DATA ROW
         # ----------------------------------------------------
         html += f"""
         <tr>
             <td class="serial">{new_sno}</td>
-            <td class="part-code">{part_code}</td>
+            <td class="part-code">{part_code if part_code != "nan" else ""}</td>
             <td class="description">{description}</td>
             <td class="quantity">{quantity}</td>
             <td class="uom">{uom}</td>
@@ -963,7 +1014,10 @@ if not bom.empty:
     </table>
     """
 
-    st.markdown(html, unsafe_allow_html=True)
+    st.markdown(
+        html,
+        unsafe_allow_html=True
+    )
 
 else:
     st.info("No components selected.")
