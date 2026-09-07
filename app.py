@@ -744,8 +744,15 @@ bom = build_bom()
 if not bom.empty:
 
     structure = bom[
-        ["S.No.", "Part Code", "Description", "Quantity", "UOM"]
-    ].copy()
+    [
+        "S.No.",
+        "Part Code",
+        "Description",
+        "Quantity",
+        "UOM",
+        "Source"
+    ]
+].copy()
 
     # ========================================================
     # SPECIAL PART CODES
@@ -897,7 +904,7 @@ if not bom.empty:
         color: white !important;
         font-weight: 700;
         font-size: 15px;
-        text-align: left !important;
+        text-align: center !important;
         padding: 12px 14px;
     }
 
@@ -946,19 +953,114 @@ if not bom.empty:
     """
 
     cooling_heading_added = False
+accessory_heading_added = False
+pdu_heading_added = False
 
-    # ========================================================
-    # ADD TABLE ROWS
-    # ========================================================
+for _, row in structure.iterrows():
 
-    for _, row in structure.iterrows():
+    part_code = str(row["Part Code"]).strip()
+    description = str(row["Description"]).strip()
+    quantity = str(row["Quantity"]).strip()
+    uom = str(row["UOM"]).strip()
+    source = str(row["Source"]).strip()
+    serial_no = str(row["New S.No."]).strip()
 
-        part_code = str(row["Part Code"]).strip()
-        description = str(row["Description"]).strip()
-        quantity = str(row["Quantity"]).strip()
-        uom = str(row["UOM"]).strip()
-        serial_no = str(row["New S.No."]).strip()
+    # --------------------------------------------------------
+    # MAIN MDC TITLE
+    # --------------------------------------------------------
 
+    if (
+        serial_no == ""
+        and "SINGLE RACK MDC" in description.upper()
+    ):
+
+        html += f"""
+        <tr class="main-mdc-row">
+            <td colspan="5">
+                {description}
+            </td>
+        </tr>
+        """
+
+        continue
+
+    # --------------------------------------------------------
+    # COOLING UNIT HEADING
+    # --------------------------------------------------------
+
+    if (
+        source == "Configuration"
+        and part_code in COOLING_PART_CODES
+        and not cooling_heading_added
+    ):
+
+        html += """
+        <tr class="section-heading">
+            <td colspan="5">
+                COOLING UNIT
+            </td>
+        </tr>
+        """
+
+        cooling_heading_added = True
+
+    # --------------------------------------------------------
+    # OTHER ACCESSORIES HEADING
+    # --------------------------------------------------------
+
+    if (
+        source == "Optional Accessory"
+        and not accessory_heading_added
+    ):
+
+        html += """
+        <tr class="section-heading">
+            <td colspan="5">
+                OTHER ACCESSORIES
+            </td>
+        </tr>
+        """
+
+        accessory_heading_added = True
+
+    # --------------------------------------------------------
+    # PDU HEADING
+    # --------------------------------------------------------
+
+    if (
+        source == "PDU"
+        and not pdu_heading_added
+    ):
+
+        html += """
+        <tr class="section-heading">
+            <td colspan="5">
+                PDU
+            </td>
+        </tr>
+        """
+
+        pdu_heading_added = True
+
+    # --------------------------------------------------------
+    # NORMAL DATA ROW
+    # --------------------------------------------------------
+
+    display_part_code = (
+        ""
+        if part_code.lower() == "nan"
+        else part_code
+    )
+
+    html += f"""
+    <tr>
+        <td class="serial">{serial_no}</td>
+        <td class="part-code">{display_part_code}</td>
+        <td class="description">{description}</td>
+        <td class="quantity">{quantity}</td>
+        <td class="uom">{uom}</td>
+    </tr>
+    """
         # ----------------------------------------------------
         # MAIN TITLE ROW
         # ----------------------------------------------------
