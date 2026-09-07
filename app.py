@@ -21,87 +21,40 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-# ------------------------------------------------------------
-# MDC / Eaton Professional Theme
-# ------------------------------------------------------------
-st.markdown(
-    """
-    <style>
-    :root {
-        --mdc-blue: #0167C9;
-        --mdc-dark-blue: #004B91;
-        --mdc-light-blue: #EAF3FC;
-    }
+# ============================================================
+# EATON MDC HEADER
+# ============================================================
 
-    /* Main headings */
-    h1, h2, h3 {
-        color: #004B91 !important;
-    }
+st.html("""
+<div style="
+    background: linear-gradient(135deg, #005EB8, #003B71);
+    padding: 22px 30px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
+">
 
-    /* Streamlit section headers */
-    [data-testid="stHeader"] {
-        background-color: transparent;
-    }
-
-    /* Primary buttons */
-    .stButton > button,
-    .stDownloadButton > button {
-        background-color: #0167C9;
+    <div style="
         color: white;
-        border: 1px solid #0167C9;
-        border-radius: 6px;
-        font-weight: 600;
-    }
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        line-height: 1.2;
+    ">
+        Eaton MDC Solution Configurator
+    </div>
 
-    .stButton > button:hover,
-    .stDownloadButton > button:hover {
-        background-color: #004B91;
-        border-color: #004B91;
-        color: white;
-    }
+    <div style="
+        color: #E6F2FF;
+        font-size: 16px;
+        font-weight: 400;
+        margin-top: 7px;
+    ">
+        Modular Data Center Solution Configuration &amp; Pricing
+    </div>
 
-    /* Radio buttons / selected controls */
-    div[role="radiogroup"] label[data-checked="true"] {
-        color: #0167C9 !important;
-    }
-
-    /* Checkbox accent */
-    input[type="checkbox"] {
-        accent-color: #0167C9;
-    }
-
-    /* Links */
-    a {
-        color: #0167C9 !important;
-    }
-
-    /* Horizontal divider */
-    hr {
-        border-color: #D6E6F5;
-    }
-
-    /* Number input focus */
-    div[data-baseweb="input"]:focus-within {
-        border-color: #0167C9 !important;
-        box-shadow: 0 0 0 1px #0167C9 !important;
-    }
-
-    /* Selectbox focus */
-    div[data-baseweb="select"]:focus-within {
-        border-color: #0167C9 !important;
-        box-shadow: 0 0 0 1px #0167C9 !important;
-    }
-
-    /* Text input / textarea focus */
-    div[data-baseweb="input"]:focus-within,
-    div[data-baseweb="textarea"]:focus-within {
-        border-color: #0167C9 !important;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+</div>
+""")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MASTER_FILE = os.path.join(BASE_DIR, "MDC_Master_V1.xlsx")
 DEMO_INTERNAL_PASSWORD = "MDC@123"  # Change before production.
