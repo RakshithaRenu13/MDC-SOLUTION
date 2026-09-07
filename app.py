@@ -279,7 +279,7 @@ def excel_bytes(internal=False, bom=None, cost_data=None):
 # ------------------------------------------------------------
 # Header
 # ------------------------------------------------------------
-st.markdown(
+st.html(
     """
     <div style="
         display:flex;
