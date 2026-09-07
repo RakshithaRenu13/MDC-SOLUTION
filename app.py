@@ -407,10 +407,10 @@ st.session_state.solution = st.text_area(
     "Solution", st.session_state.solution, height=90
 )
 
-# ------------------------------------------------------------
-# 2 MDC Type & Configuration
-# Both Sales and Internal users can select MDC type/configuration.
-# ------------------------------------------------------------
+# ============================================================
+# 2. MDC Type & Configuration
+# ============================================================
+
 st.header("2. MDC Type & Configuration")
 
 mdc_type = st.radio(
@@ -437,25 +437,37 @@ if labels:
     st.session_state.configuration = st.selectbox(
         "Select Configuration",
         labels,
-        index=labels.index(st.session_state.configuration)
-        if st.session_state.configuration in labels else 0,
+        index=(
+            labels.index(st.session_state.configuration)
+            if st.session_state.configuration in labels
+            else 0
+        ),
     )
 
-cfg = selected_config_record()
-if cfg is not None:
-    if cfg["Status"] == "REAL DATA":
-        st.success(
-            f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-        )
-    else:
-        st.warning(
-            f'**Selected Configuration: {cfg["Configuration"]} — {cfg["Configuration Title"]}**'
-        )
+# ------------------------------------------------------------
+# Selected Configuration Display
+# ------------------------------------------------------------
 
-if not is_internal:
-    st.caption(
-        "Sales can select Single Rack/Multirack and the required configuration. "
-        "Internal cost information remains hidden."
+cfg = selected_config_record()
+
+if cfg is not None:
+    st.markdown(
+        f"""
+        <div style="
+            background-color: #005EB8;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        ">
+            Selected Configuration:
+            {cfg["Configuration"]} — {cfg["Configuration Title"]}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 # ------------------------------------------------------------
