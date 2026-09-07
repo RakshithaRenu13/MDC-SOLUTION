@@ -33,7 +33,6 @@ st.html("""
     margin-bottom: 25px;
     box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
 ">
-
     <div style="
         color: white;
         font-size: 32px;
@@ -52,9 +51,9 @@ st.html("""
     ">
         Modular Data Center Solution Configuration &amp; Pricing
     </div>
-
 </div>
 """)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MASTER_FILE = os.path.join(BASE_DIR, "MDC_Master_V1.xlsx")
 DEMO_INTERNAL_PASSWORD = "MDC@123"  # Change before production.
