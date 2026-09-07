@@ -1179,7 +1179,7 @@ if not bom.empty:
         # ----------------------------------------------------
 
         if (
-            component_type == "Cooling Unit"
+            "cooling" in str(row["Description"]).lower()
             and not cooling_heading_added
         ):
 
