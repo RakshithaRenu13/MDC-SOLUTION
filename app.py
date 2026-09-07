@@ -869,11 +869,19 @@ if not bom.empty:
 
     MAIN_MDC_PART = "801029209"
 
-    COOLING_PART_CODES = {
-        "801401725",
-        "801401726",
-        "801401745",
-    }
+    selected_config_components = selected_components()
+
+    cooling_part_codes = set()
+
+    if not selected_config_components.empty:
+         cooling_rows = selected_config_components.tail(3)
+
+         cooling_part_codes = set(
+              cooling_rows["Part Code"]
+              .dropna()
+              .astype(str)
+              .str.strip()
+         )
 
     # ========================================================
     # CREATE NEW SERIAL NUMBERS
@@ -893,7 +901,7 @@ if not bom.empty:
     pdu_started = False
     pdu_no = 0
 
-    for _, row in structure.iterrows():
+    for row_index, row in structure.iterrows():
 
         part_code = str(row["Part Code"]).strip()
         description = str(row["Description"]).strip()
@@ -929,9 +937,7 @@ if not bom.empty:
         # 801401745 -> 2.3
         # ----------------------------------------------------
 
-        description = str(row.get("Description", "")).strip()
-
-        if "PAC" in description.upper():
+       if part_code in cooling_part_codes:
 
             cooling_started = True
             cooling_sub_no += 1
@@ -1127,7 +1133,7 @@ if not bom.empty:
     # ADD TABLE ROWS
     # ========================================================
 
-    for _, row in structure.iterrows():
+    for row_index, row in structure.iterrows():
 
         part_code = str(row["Part Code"]).strip()
         description = str(row["Description"]).strip()
@@ -1161,10 +1167,9 @@ if not bom.empty:
         # ----------------------------------------------------
         # COOLING UNIT HEADING
         # ----------------------------------------------------
-        description = str(row.get("Description", "")).strip()
 
         if (
-            "PAC" in description.upper()
+            part_code in cooling_part_codes
             and not cooling_heading_added
         ):
 
