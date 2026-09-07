@@ -1,5 +1,7 @@
 import os
+import sqlite3
 from io import BytesIO
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
@@ -58,6 +60,253 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MASTER_FILE = os.path.join(BASE_DIR, "MDC_Master_V1.xlsx")
 DEMO_INTERNAL_PASSWORD = "MDC@123"  # Change before production.
 
+# ============================================================
+# MDC CONFIGURATION TRACKING DATABASE
+# No login required
+# ============================================================
+
+TRACKING_DB = os.path.join(BASE_DIR, "MDC_Tracking.db")
+
+
+def init_tracking_db():
+    conn = sqlite3.connect(TRACKING_DB)
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS configurations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            configuration_id TEXT UNIQUE,
+            created_at TEXT,
+
+            customer_name TEXT,
+            customer_place TEXT,
+            problem TEXT,
+            solution TEXT,
+
+            mdc_type TEXT,
+            configuration TEXT,
+
+            base_cost REAL,
+            optional_cost REAL,
+            pdu_cost REAL,
+            total_cost REAL,
+
+            margin_pct REAL,
+            freight REAL,
+            installation REAL,
+            warranty_pct REAL,
+
+            margin_price REAL,
+            final_selling_price REAL,
+            warranty_amount REAL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS configuration_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            configuration_id TEXT,
+
+            component_type TEXT,
+            part_code TEXT,
+            description TEXT,
+            quantity REAL,
+            uom TEXT,
+
+            unit_cost REAL,
+            total_cost REAL,
+            unit_price REAL,
+            total_price REAL
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def generate_configuration_id():
+    """
+    Generates IDs like:
+
+    MDC-20260907-0001
+    MDC-20260907-0002
+    MDC-20260907-0003
+    """
+
+    today = datetime.now().strftime("%Y%m%d")
+
+    conn = sqlite3.connect(TRACKING_DB)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM configurations
+        WHERE configuration_id LIKE ?
+    """, (f"MDC-{today}-%",))
+
+    count = cursor.fetchone()[0] + 1
+
+    conn.close()
+
+    return f"MDC-{today}-{count:04d}"
+
+
+def save_configuration(
+    configuration_id,
+    bom,
+    base_cost,
+    optional_cost,
+    pdu_cost,
+    total_cost,
+    margin_pct,
+    freight,
+    installation,
+    warranty_pct,
+    margin_price,
+    final_selling_price,
+    warranty_amount,
+):
+
+    conn = sqlite3.connect(TRACKING_DB)
+    cursor = conn.cursor()
+
+    created_at = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    # --------------------------------------------------------
+    # Save configuration master record
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        INSERT OR REPLACE INTO configurations (
+            configuration_id,
+            created_at,
+
+            customer_name,
+            customer_place,
+            problem,
+            solution,
+
+            mdc_type,
+            configuration,
+
+            base_cost,
+            optional_cost,
+            pdu_cost,
+            total_cost,
+
+            margin_pct,
+            freight,
+            installation,
+            warranty_pct,
+
+            margin_price,
+            final_selling_price,
+            warranty_amount
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        configuration_id,
+        created_at,
+
+        st.session_state.customer_name,
+        st.session_state.customer_place,
+        st.session_state.problem,
+        st.session_state.solution,
+
+        st.session_state.mdc_type,
+        st.session_state.configuration,
+
+        float(base_cost),
+        float(optional_cost),
+        float(pdu_cost),
+        float(total_cost),
+
+        float(margin_pct),
+        float(freight),
+        float(installation),
+        float(warranty_pct),
+
+        float(margin_price),
+        float(final_selling_price),
+        float(warranty_amount),
+    ))
+
+    # --------------------------------------------------------
+    # Remove old items if same configuration is saved again
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        DELETE FROM configuration_items
+        WHERE configuration_id = ?
+    """, (configuration_id,))
+
+    # --------------------------------------------------------
+    # Save complete BOM
+    # --------------------------------------------------------
+
+    if bom is not None and not bom.empty:
+
+        for _, row in bom.iterrows():
+
+            unit_price = row.get("Unit Price", None)
+            total_price = row.get("Total Price", None)
+
+            cursor.execute("""
+                INSERT INTO configuration_items (
+                    configuration_id,
+
+                    component_type,
+                    part_code,
+                    description,
+                    quantity,
+                    uom,
+
+                    unit_cost,
+                    total_cost,
+                    unit_price,
+                    total_price
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                configuration_id,
+
+                str(row.get("Component Type", "")),
+                str(row.get("Part Code", "")),
+                str(row.get("Description", "")),
+
+                float(row.get("Quantity", 0))
+                if pd.notna(row.get("Quantity"))
+                else 0,
+
+                str(row.get("UOM", "")),
+
+                float(row.get("Unit Cost", 0))
+                if pd.notna(row.get("Unit Cost"))
+                else 0,
+
+                float(row.get("Total Cost", 0))
+                if pd.notna(row.get("Total Cost"))
+                else 0,
+
+                float(unit_price)
+                if pd.notna(unit_price)
+                else None,
+
+                float(total_price)
+                if pd.notna(total_price)
+                else None,
+            ))
+
+    conn.commit()
+    conn.close()
+
+
+# Initialize database when application starts
+init_tracking_db()
+
 # ------------------------------------------------------------
 # Load master data
 # ------------------------------------------------------------
@@ -89,10 +338,15 @@ defaults = {
     "freight": 0.0,
     "installation": 0.0,
     "warranty_pct": 0.0,
+    "configuration_id": None,
+    "configuration_saved": False,
+
 }
 for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
+if st.session_state.configuration_id is None:
+    st.session_state.configuration_id = generate_configuration_id()
 
 def money(value):
     return f"₹ {value:,.2f}"
@@ -344,7 +598,39 @@ st.html("""
     </div>
 </div>
 """)
+# ============================================================
+# CONFIGURATION TRACKING ID
+# ============================================================
 
+st.markdown(
+    f"""
+    <div style="
+        background:#F7FBFF;
+        border:1px solid #B8D8F5;
+        border-left:6px solid #005EB8;
+        border-radius:8px;
+        padding:12px 18px;
+        margin-bottom:20px;
+    ">
+        <div style="
+            font-size:13px;
+            color:#64748B;
+            margin-bottom:3px;
+        ">
+            Configuration ID
+        </div>
+
+        <div style="
+            font-size:20px;
+            font-weight:700;
+            color:#003B71;
+        ">
+            {st.session_state.configuration_id}
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 # ------------------------------------------------------------
 # Access mode
 # ------------------------------------------------------------
@@ -421,10 +707,17 @@ mdc_type = st.radio(
 )
 
 if mdc_type != st.session_state.mdc_type:
+
     st.session_state.mdc_type = mdc_type
     st.session_state.configuration = "Configuration 1"
+
     st.session_state.accessory_qty = {}
     st.session_state.pdu_qty = {}
+
+    # New configuration ID
+    st.session_state.configuration_id = generate_configuration_id()
+    st.session_state.configuration_saved = False
+
     st.rerun()
 
 available = configs_df[
@@ -1117,9 +1410,120 @@ if not bom.empty:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True,
         )
+        
+# ============================================================
+# 10. SAVE CONFIGURATION
+# ============================================================
 
+st.header("10. Save Configuration")
+
+st.caption(
+    "Save the current MDC configuration for future tracking and reference."
+)
+
+save_col1, save_col2 = st.columns([2, 5])
+
+with save_col1:
+
+    if st.button(
+        "💾 Save Configuration",
+        use_container_width=True,
+        type="primary"
+    ):
+
+        # Calculate selling price
+        current_margin_price = (
+            total_cost / (1 - margin_pct / 100)
+            if margin_pct < 100
+            else 0
+        )
+
+        current_final_price = (
+            current_margin_price
+            + freight
+            + installation
+        )
+
+        current_warranty_amount = (
+            current_margin_price
+            * warranty_pct
+            / 100
+        )
+
+        save_configuration(
+            configuration_id=st.session_state.configuration_id,
+
+            bom=bom_with_price,
+
+            base_cost=base_cost,
+            optional_cost=optional_cost,
+            pdu_cost=pdu_cost,
+            total_cost=total_cost,
+
+            margin_pct=margin_pct,
+            freight=freight,
+            installation=installation,
+            warranty_pct=warranty_pct,
+
+            margin_price=current_margin_price,
+            final_selling_price=current_final_price,
+            warranty_amount=current_warranty_amount,
+        )
+
+        st.session_state.configuration_saved = True
+
+        st.success(
+            f"Configuration {st.session_state.configuration_id} saved successfully."
+        )
 st.divider()
 st.caption(
     "MDC Solution V1 | Single Rack data loaded from the supplied 01.09.2026 BOQ | "
     "Multirack configurations are XXX placeholders for future updates."
 )
+# ============================================================
+# 11. CONFIGURATION HISTORY
+# INTERNAL USERS ONLY
+# ============================================================
+
+if is_internal:
+
+    st.header("11. Configuration History")
+
+    conn = sqlite3.connect(TRACKING_DB)
+
+    history_df = pd.read_sql_query(
+        """
+        SELECT
+            configuration_id AS "Configuration ID",
+            created_at AS "Created At",
+            customer_name AS "Customer",
+            customer_place AS "Place",
+            mdc_type AS "MDC Type",
+            configuration AS "Configuration",
+            final_selling_price AS "Final Selling Price"
+        FROM configurations
+        ORDER BY id DESC
+        """,
+        conn
+    )
+
+    conn.close()
+
+    if not history_df.empty:
+
+        history_df["Final Selling Price"] = (
+            history_df["Final Selling Price"]
+            .apply(money)
+        )
+
+        st.dataframe(
+            history_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    else:
+
+        st.info(
+            "No saved configurations available yet."
+        )
