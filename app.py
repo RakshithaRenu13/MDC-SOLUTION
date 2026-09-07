@@ -516,37 +516,42 @@ for _, r in accessories_df.iterrows():
 # 4 PDU selection
 # ------------------------------------------------------------
 st.header("4. PDU Selection")
-st.caption("Select PDU components and update quantity. Prices are intentionally not shown here.")
 
-for _, r in pdus_df.iterrows():
-    part = str(r["Part Code"])
-    key_check = f"pdu_check_{part}"
-    key_qty = f"pdu_qty_{part}"
+pdu_options = [
+    f'{r["Part Code"]} — {r["Description"]}'
+    for _, r in pdus_df.iterrows()
+]
 
-    selected = st.checkbox(
-        f'{part} — {r["Description"]}',
-        value=st.session_state.pdu_qty.get(part, 0) > 0,
-        key=key_check,
+col1, col2 = st.columns([5, 1.5])
+
+with col1:
+    selected_pdu = st.selectbox(
+        "Select PDU",
+        ["None"] + pdu_options,
+        index=0
     )
 
-    cols = st.columns([6, 2, 2])
-    with cols[0]:
-        st.caption(
-            f'Type: {r["Type"]} | C13: {r["C13"]} | C19: {r["C19"]} | UOM: {r["UOM"]}'
-        )
-    with cols[1]:
-        if selected:
-            qty = st.number_input(
-                "Quantity",
-                min_value=1,
-                max_value=999,
-                value=max(1, int(st.session_state.pdu_qty.get(part, 1))),
-                step=1,
-                key=key_qty,
-            )
-            st.session_state.pdu_qty[part] = qty
-        else:
-            st.session_state.pdu_qty[part] = 0
+with col2:
+    qty = st.number_input(
+        "Quantity",
+        min_value=1,
+        max_value=999,
+        value=1,
+        step=1,
+        key="pdu_quantity"
+    )
+
+# Reset PDU quantity dictionary
+st.session_state.pdu_qty = {}
+
+if selected_pdu != "None":
+
+    selected_index = pdu_options.index(selected_pdu)
+    selected_row = pdus_df.iloc[selected_index]
+
+    part = str(selected_row["Part Code"])
+
+    st.session_state.pdu_qty[part] = qty
 
 # ------------------------------------------------------------
 # 5 Final structure - common to both users
