@@ -375,6 +375,7 @@ def customer_table():
     )
 
 
+```python
 def excel_bytes(
     internal=False,
     bom=None,
@@ -391,9 +392,29 @@ def excel_bytes(
     # --------------------------------------------------------
     # Create ONE combined Excel sheet only
     # --------------------------------------------------------
-    with pd.ExcelWriter(output, engine="openpyxl"):
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl",
+    ) as writer:
 
         sheet_name = "MDC Solution"
+
+        # ====================================================
+        # IMPORTANT:
+        # Create the worksheet explicitly first.
+        # This prevents:
+        # IndexError: At least one sheet must be visible
+        # ====================================================
+        writer.book.create_sheet(sheet_name)
+
+        # Remove the default active sheet if one was created
+        # automatically and is different from our sheet.
+        for ws in list(writer.book.worksheets):
+            if ws.title != sheet_name:
+                writer.book.remove(ws)
+
+        # Make MDC Solution the active sheet
+        writer.book.active = 0
 
         # ====================================================
         # CUSTOMER DETAILS & CONFIGURATION
@@ -554,6 +575,8 @@ def excel_bytes(
     output.seek(0)
 
     return output
+```
+
 
 
 # ------------------------------------------------------------
