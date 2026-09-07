@@ -25,34 +25,34 @@ st.set_page_config(
 # EATON MDC HEADER
 # ============================================================
 
-st.html("""
-<div style="
-    background: linear-gradient(135deg, #005EB8, #003B71);
-    padding: 22px 30px;
-    border-radius: 10px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
-">
-    <div style="
-        color: white;
-        font-size: 32px;
-        font-weight: 700;
-        letter-spacing: 0.3px;
-        line-height: 1.2;
-    ">
-        Eaton MDC Solution Configurator
-    </div>
+# st.html("""
+# <div style="
+#     background: linear-gradient(135deg, #005EB8, #003B71);
+#     padding: 22px 30px;
+#     border-radius: 10px;
+#     margin-bottom: 25px;
+#     box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
+# ">
+#     <div style="
+#         color: white;
+#         font-size: 32px;
+#         font-weight: 700;
+#         letter-spacing: 0.3px;
+#         line-height: 1.2;
+#     ">
+#         Eaton MDC Solution Configurator
+#     </div>
 
-    <div style="
-        color: #E6F2FF;
-        font-size: 16px;
-        font-weight: 400;
-        margin-top: 7px;
-    ">
-        Modular Data Center Solution Configuration &amp; Pricing
-    </div>
-</div>
-""")
+#     <div style="
+#         color: #E6F2FF;
+#         font-size: 16px;
+#         font-weight: 400;
+#         margin-top: 7px;
+#     ">
+#         Modular Data Center Solution Configuration &amp; Pricing
+#     </div>
+# </div>
+# """)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MASTER_FILE = os.path.join(BASE_DIR, "MDC_Master_V1.xlsx")
@@ -279,43 +279,71 @@ def excel_bytes(internal=False, bom=None, cost_data=None):
 # ------------------------------------------------------------
 # Header
 # ------------------------------------------------------------
-st.html(
-    """
+# st.markdown(
+#     """
+#     <div style="
+#         display:flex;
+#         align-items:center;
+#         gap:14px;
+#         padding:12px 0 16px 0;
+#     ">
+#         <div style="
+#             width:8px;
+#             height:55px;
+#             background:#0167C9;
+#             border-radius:4px;
+#         "></div>
+
+#         <div>
+#             <div style="
+#                 font-size:36px;
+#                 font-weight:700;
+#                 color:#004B91;
+#                 line-height:1.1;
+#             ">
+#                 MDC Solution
+#             </div>
+
+#             <div style="
+#                 font-size:16px;
+#                 color:#64748B;
+#                 margin-top:5px;
+#             ">
+#                 Rack Configuration & Solution Selection
+#             </div>
+#         </div>
+#     </div>
+#     """,
+#     unsafe_allow_html=True,
+# )
+st.html("""
+<div style="
+    background: linear-gradient(135deg, #005EB8, #003B71);
+    padding: 22px 30px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 59, 113, 0.18);
+">
     <div style="
-        display:flex;
-        align-items:center;
-        gap:14px;
-        padding:12px 0 16px 0;
+        color: white;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        line-height: 1.2;
     ">
-        <div style="
-            width:8px;
-            height:55px;
-            background:#0167C9;
-            border-radius:4px;
-        "></div>
-
-        <div>
-            <div style="
-                font-size:36px;
-                font-weight:700;
-                color:#004B91;
-                line-height:1.1;
-            ">
-                MDC Solution
-            </div>
-
-            <div style="
-                font-size:16px;
-                color:#64748B;
-                margin-top:5px;
-            ">
-                Rack Configuration & Solution Selection
-            </div>
-        </div>
+        Eaton MDC Solution Configurator
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+
+    <div style="
+        color: #E6F2FF;
+        font-size: 16px;
+        font-weight: 400;
+        margin-top: 7px;
+    ">
+        Modular Data Center Solution Configuration &amp; Pricing
+    </div>
+</div>
+""")
 
 # ------------------------------------------------------------
 # Access mode
