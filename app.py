@@ -953,17 +953,17 @@ if not bom.empty:
     """
 
     cooling_heading_added = False
-accessory_heading_added = False
-pdu_heading_added = False
+    accessory_heading_added = False
+    pdu_heading_added = False
 
-for _, row in structure.iterrows():
+    for _, row in structure.iterrows():
 
-    part_code = str(row["Part Code"]).strip()
-    description = str(row["Description"]).strip()
-    quantity = str(row["Quantity"]).strip()
-    uom = str(row["UOM"]).strip()
-    source = str(row["Source"]).strip()
-    serial_no = str(row["New S.No."]).strip()
+        part_code = str(row["Part Code"]).strip()
+        description = str(row["Description"]).strip()
+        quantity = str(row["Quantity"]).strip()
+        uom = str(row["UOM"]).strip()
+        source = str(row["Source"]).strip()
+        serial_no = str(row["New S.No."]).strip()
 
     # --------------------------------------------------------
     # MAIN MDC TITLE
