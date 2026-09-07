@@ -1593,88 +1593,41 @@ else:
 # ------------------------------------------------------------
 # 8 Final BOM
 # ------------------------------------------------------------
-
 st.header("8. Final BOM")
 
-
 if not bom.empty:
-
-    bom_with_price, margin_price, final_selling_price = (
-        add_selling_prices(
-            bom,
-            total_cost,
-            margin_pct,
-            freight,
-            installation,
-        )
+    bom_with_price, margin_price, final_selling_price = add_selling_prices(
+        bom, total_cost, margin_pct, freight, installation
     )
 
+    display = bom_with_price[[
+        "S.No.", "Component Type", "Part Code", "Description", "Quantity",
+        "UOM", "Unit Price", "Total Price"
+    ]].copy()
 
-    display = bom_with_price[
-        [
-            "S.No.",
-            "Component Type",
-            "Part Code",
-            "Description",
-            "Quantity",
-            "UOM",
-            "Unit Price",
-            "Total Price",
-        ]
-    ].copy()
-
-
-    display["Unit Price"] = display[
-        "Unit Price"
-    ].apply(
-        lambda x:
-            money(float(x))
-            if pd.notna(x)
-            else "N/A"
+    display["Unit Price"] = display["Unit Price"].apply(
+        lambda x: money(float(x)) if pd.notna(x) else "N/A"
     )
 
-
-    display["Total Price"] = display[
-        "Total Price"
-    ].apply(
-        lambda x:
-            money(float(x))
-            if pd.notna(x)
-            else "N/A"
+    display["Total Price"] = display["Total Price"].apply(
+        lambda x: money(float(x)) if pd.notna(x) else "N/A"
     )
-
 
     st.dataframe(
         display,
         use_container_width=True,
-        hide_index=True,
+        hide_index=True
     )
 
-
-    # IMPORTANT:
-    # Final Selling Price / BOM Selling Value
-    # is intentionally NOT displayed here.
-    #
-    # This prevents the large price box from appearing
-    # directly underneath the Final BOM.
-
-
     if not is_internal:
-
         st.caption(
             "Sales view contains selling prices only. "
             "Internal unit cost and total cost are not displayed."
         )
 
-
 else:
-
     bom_with_price = bom
-
-    st.info(
-        "No BOM available."
-    )
-
+    st.info("No BOM available.")
 
 # ------------------------------------------------------------
 # 9 Excel Download
