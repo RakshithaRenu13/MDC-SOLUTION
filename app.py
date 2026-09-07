@@ -1160,8 +1160,26 @@ if not bom.empty:
         # COOLING UNIT HEADING
         # ----------------------------------------------------
 
+        # if (
+        #     part_code in COOLING_PART_CODES
+        #     and not cooling_heading_added
+        # ):
+
+        #     html += """
+        #     <tr class="section-heading">
+        #         <td colspan="5">
+        #             COOLING UNIT
+        #         </td>
+        #     </tr>
+        #     """
+
+        #     cooling_heading_added = True
+        # ----------------------------------------------------
+        # COOLING UNIT HEADING
+        # ----------------------------------------------------
+
         if (
-            part_code in COOLING_PART_CODES
+            component_type == "Cooling Unit"
             and not cooling_heading_added
         ):
 
