@@ -1846,7 +1846,6 @@ if is_internal:
             warranty_amount,
         )
 
-
 # ------------------------------------------------------------
 # 8 Final BOM
 # ------------------------------------------------------------
@@ -1903,19 +1902,6 @@ if not bom.empty:
         display,
         use_container_width=True,
         hide_index=True,
-    )
-
-    known = (
-        bom_with_price[
-            "Total Price"
-        ]
-        .dropna()
-        .sum()
-    )
-
-    price_box(
-        "Final Selling Price",
-        float(known),
     )
 
     # if not is_internal:
