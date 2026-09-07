@@ -1,4 +1,4 @@
-```python
+
 import os
 from io import BytesIO
 
@@ -1848,7 +1848,7 @@ st.caption(
     "01.09.2026 BOQ | Multirack configurations are XXX placeholders "
     "for future updates."
 )
-```
+
 
 # ### One important deployment change
 
