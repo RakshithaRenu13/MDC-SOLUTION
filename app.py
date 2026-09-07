@@ -929,7 +929,9 @@ if not bom.empty:
         # 801401745 -> 2.3
         # ----------------------------------------------------
 
-        if component_type == "Cooling Unit":
+        description = str(row.get("Description", "")).strip()
+
+        if "PAC" in description.upper():
 
             cooling_started = True
             cooling_sub_no += 1
@@ -1159,9 +1161,10 @@ if not bom.empty:
         # ----------------------------------------------------
         # COOLING UNIT HEADING
         # ----------------------------------------------------
+        description = str(row.get("Description", "")).strip()
 
         if (
-            component_type == "Cooling Unit"
+            "PAC" in description.upper()
             and not cooling_heading_added
         ):
 
