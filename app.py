@@ -798,7 +798,7 @@ st.header("3. Optional Accessories")
 
 if st.session_state.mdc_type == "Single Rack":
 
-    if OPTIONAL_DF.empty:
+    if accessories_df.empty:
         st.info("No optional items were found in the workbook.")
 
     else:
