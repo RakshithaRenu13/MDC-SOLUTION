@@ -794,273 +794,247 @@ if cfg is not None:
 #             st.session_state.accessory_qty[part] = qty
 #         else:
 #             st.session_state.accessory_qty.pop(part, None)
+# ============================================================
+# 3. OPTIONAL ACCESSORIES
+# ============================================================
+
 st.header("3. Optional Accessories")
 
-if st.session_state.mdc_type == "Single Rack":
+# ------------------------------------------------------------
+# PART CODES
+# ------------------------------------------------------------
 
-    if accessories_df.empty:
-        st.info("No optional items were found in the workbook.")
+FIRE_SUPPRESSION_PARTS = [
+    "801073203",   # FIRE SUPR EXT42U...
+    "HRD-XH1C",    # FIRE SUPPRESS, RACK MNT...
+]
+
+FIRE_SUPPRESSION_SUPPORT = [
+    "801075235",   # BRUSH PANEL 1 U
+]
+
+CAMERA_PARTS = [
+    "801303201",   # CAMERA, 4MP VANDAL
+    "801303202",   # CAMERA, NVR 4 CHA INT
+    "801303204",   # CAMERA, POE GB 4P
+    "801303206",   # CAMERA, CAT 5 CABLE RJ45
+    "801303208",   # CAMERA, SVR HDD 1TB
+    "801303203",   # CAMERA, SVR HDD 4TB
+]
+
+# ------------------------------------------------------------
+# CREATE PART-CODE LOOKUP FROM accessories_df
+# ------------------------------------------------------------
+
+optional_lookup = {}
+
+for _, r in accessories_df.iterrows():
+
+    part = str(r["Part Code"]).strip()
+
+    if part and part.lower() != "nan":
+        optional_lookup[part] = r
+
+
+# ============================================================
+# FIRE SUPPRESSION
+# ============================================================
+
+st.subheader("🔥 Fire Suppression")
+
+st.caption(
+    "Select the required Fire Suppression system. "
+    "Brush Panel 1 U will be added automatically."
+)
+
+fire_selected = False
+
+for part in FIRE_SUPPRESSION_PARTS:
+
+    if part not in optional_lookup:
+        continue
+
+    r = optional_lookup[part]
+
+    selected = st.checkbox(
+        f'{part} — {r["Description"]}',
+        value=(
+            st.session_state.accessory_qty.get(part, 0) > 0
+        ),
+        key=f"fire_{part}"
+    )
+
+    if selected:
+
+        # Add selected Fire Suppression item
+        st.session_state.accessory_qty[part] = 1
+
+        fire_selected = True
 
     else:
 
-        # --------------------------------------------------------
-        # PART CODES
-        # --------------------------------------------------------
-
-        FIRE_SUPPRESSION_PARTS = [
-            "801073203",   # FIRE SUPR EXT42U...
-            "HRD-XH1C",    # FIRE SUPPRESS, RACK MNT...
-        ]
-
-        FIRE_SUPPRESSION_SUPPORT = [
-            "801075235",   # BRUSH PANEL 1 U
-        ]
-
-        CAMERA_PARTS = [
-            "801303201",   # CAMERA, 4MP VANDAL
-            "801303202",   # CAMERA, NVR 4 CHA INT
-            "801303204",   # CAMERA, POE GB 4P
-            "801303206",   # CAMERA, CAT 5 CABLE RJ45
-            "801303208",   # CAMERA, SVR HDD 1TB
-            "801303203",   # CAMERA, SVR HDD 4TB
-        ]
-
-        # --------------------------------------------------------
-        # CREATE LOOKUP FROM EXCEL
-        # --------------------------------------------------------
-
-        optional_lookup = {}
-
-        for _, r in OPTIONAL_DF.iterrows():
-            part = valid_part(r["Part Code"])
-
-            if part:
-                optional_lookup[part] = r
-
-        # --------------------------------------------------------
-        # HELPER FUNCTION
-        # --------------------------------------------------------
-
-        def set_accessory_quantity(part_code, quantity):
-            """
-            Add/remove an accessory from the current BOM selection.
-            """
-            if quantity > 0:
-                st.session_state.accessory_qty[part_code] = quantity
-            else:
-                st.session_state.accessory_qty.pop(
-                    part_code,
-                    None
-                )
-
-        # ========================================================
-        # FIRE SUPPRESSION
-        # ========================================================
-
-        st.subheader("🔥 Fire Suppression")
-
-        st.caption(
-            "Selecting a Fire Suppression system automatically "
-            "includes the required Brush Panel."
+        st.session_state.accessory_qty.pop(
+            part,
+            None
         )
 
-        fire_selected = False
 
-        for part in FIRE_SUPPRESSION_PARTS:
+# ------------------------------------------------------------
+# AUTOMATIC FIRE SUPPRESSION SUPPORT
+# ------------------------------------------------------------
 
-            if part not in optional_lookup:
-                continue
+if fire_selected:
 
-            r = optional_lookup[part]
+    for part in FIRE_SUPPRESSION_SUPPORT:
 
-            selected = st.checkbox(
-                f'{part} — {r["Description"]}',
-                value=(
-                    st.session_state.accessory_qty.get(
-                        part, 0
-                    ) > 0
-                ),
-                key=f"fire_{part}"
-            )
+        if part in optional_lookup:
 
-            if selected:
+            # Automatically add Brush Panel 1 U
+            st.session_state.accessory_qty[part] = 1
 
-                # Main fire suppression item
-                set_accessory_quantity(part, 1)
-
-                fire_selected = True
-
-            else:
-
-                st.session_state.accessory_qty.pop(
-                    part,
-                    None
-                )
-
-        # --------------------------------------------------------
-        # AUTOMATIC FIRE SUPPRESSION SUPPORT
-        # --------------------------------------------------------
-
-        if fire_selected:
-
-            for part in FIRE_SUPPRESSION_SUPPORT:
-
-                if part in optional_lookup:
-
-                    # Automatically add required support item
-                    set_accessory_quantity(part, 1)
-
-            st.success(
-                "Fire Suppression selected → "
-                "Brush Panel 1 U automatically included."
-            )
-
-        else:
-
-            # Remove supporting item if no fire suppression selected
-            for part in FIRE_SUPPRESSION_SUPPORT:
-                st.session_state.accessory_qty.pop(
-                    part,
-                    None
-                )
-
-        # ========================================================
-        # CAMERA SYSTEM
-        # ========================================================
-
-        st.subheader("📷 Camera System")
-
-        st.caption(
-            "Selecting the Camera System automatically includes "
-            "the required camera, NVR, PoE, cable and storage components."
-        )
-
-        camera_selected = st.checkbox(
-            "Enable Camera System",
-            value=any(
-                st.session_state.accessory_qty.get(
-                    part, 0
-                ) > 0
-                for part in CAMERA_PARTS
-            ),
-            key="camera_system"
-        )
-
-        if camera_selected:
-
-            # ----------------------------------------------------
-            # Automatically include ALL camera system components
-            # ----------------------------------------------------
-
-            for part in CAMERA_PARTS:
-
-                if part in optional_lookup:
-
-                    set_accessory_quantity(part, 1)
-
-            st.success(
-                "Camera System selected → "
-                "all required camera components automatically included."
-            )
-
-            # ----------------------------------------------------
-            # Display included components
-            # ----------------------------------------------------
-
-            st.markdown("**Included Camera Components:**")
-
-            for part in CAMERA_PARTS:
-
-                if part in optional_lookup:
-
-                    r = optional_lookup[part]
-
-                    st.write(
-                        f"✓ **{part}** — {r['Description']}"
-                    )
-
-        else:
-
-            # Remove all camera system components
-            for part in CAMERA_PARTS:
-
-                st.session_state.accessory_qty.pop(
-                    part,
-                    None
-                )
-
-        # ========================================================
-        # OTHER OPTIONAL ACCESSORIES
-        # ========================================================
-
-        st.subheader("Other Optional Accessories")
-
-        OTHER_OPTIONAL_PARTS = [
-            "801223664",   # Rotating Keyboard tray
-            "801075237",   # 1 U Cable Manager Plastic
-            "801029022",   # MDC,42U TOP CABLE TRAY IT
-        ]
-
-        for part in OTHER_OPTIONAL_PARTS:
-
-            if part not in optional_lookup:
-                continue
-
-            r = optional_lookup[part]
-
-            col1, col2 = st.columns(
-                [5.5, 1.8],
-                vertical_alignment="center"
-            )
-
-            with col1:
-
-                selected = st.checkbox(
-                    f'{part} — {r["Description"]}',
-                    value=(
-                        st.session_state.accessory_qty.get(
-                            part, 0
-                        ) > 0
-                    ),
-                    key=f"other_acc_{part}"
-                )
-
-            with col2:
-
-                if selected:
-
-                    qty = st.number_input(
-                        "Quantity",
-                        min_value=1,
-                        max_value=999,
-                        step=1,
-                        value=int(
-                            st.session_state.accessory_qty.get(
-                                part,
-                                1
-                            )
-                        ),
-                        key=f"other_qty_{part}"
-                    )
-
-                    set_accessory_quantity(
-                        part,
-                        qty
-                    )
-
-                else:
-
-                    st.session_state.accessory_qty.pop(
-                        part,
-                        None
-                    )
+    st.success(
+        "Fire Suppression selected → "
+        "Brush Panel 1 U automatically included."
+    )
 
 else:
 
-    st.info(
-        "Optional Multirack components will be enabled "
-        "when the Multirack BOQ is supplied."
+    # Remove Brush Panel if Fire Suppression is not selected
+    for part in FIRE_SUPPRESSION_SUPPORT:
+
+        st.session_state.accessory_qty.pop(
+            part,
+            None
+        )
+
+
+# ============================================================
+# CAMERA SYSTEM
+# ============================================================
+
+st.subheader("📷 Camera System")
+
+st.caption(
+    "Selecting the Camera System automatically includes "
+    "the required camera, NVR, PoE, CAT 5 cable and storage."
+)
+
+camera_selected = st.checkbox(
+    "Enable Camera System",
+    value=any(
+        st.session_state.accessory_qty.get(part, 0) > 0
+        for part in CAMERA_PARTS
+    ),
+    key="camera_system"
+)
+
+
+if camera_selected:
+
+    # --------------------------------------------------------
+    # AUTOMATICALLY ADD CAMERA COMPONENTS
+    # --------------------------------------------------------
+
+    for part in CAMERA_PARTS:
+
+        if part in optional_lookup:
+
+            st.session_state.accessory_qty[part] = 1
+
+    st.success(
+        "Camera System selected → "
+        "all required camera components automatically included."
     )
+
+    # --------------------------------------------------------
+    # SHOW INCLUDED COMPONENTS
+    # --------------------------------------------------------
+
+    st.markdown("**Included Camera Components:**")
+
+    for part in CAMERA_PARTS:
+
+        if part in optional_lookup:
+
+            r = optional_lookup[part]
+
+            st.write(
+                f"✓ **{part}** — {r['Description']}"
+            )
+
+else:
+
+    # Remove all camera components
+    for part in CAMERA_PARTS:
+
+        st.session_state.accessory_qty.pop(
+            part,
+            None
+        )
+
+
+# ============================================================
+# OTHER OPTIONAL ACCESSORIES
+# ============================================================
+
+st.subheader("Other Optional Accessories")
+
+OTHER_OPTIONAL_PARTS = [
+    "801223664",   # Rotating Keyboard tray
+    "801075237",   # 1 U Cable Manager Plastic
+    "801029022",   # MDC,42U TOP CABLE TRAY IT
+]
+
+for part in OTHER_OPTIONAL_PARTS:
+
+    if part not in optional_lookup:
+        continue
+
+    r = optional_lookup[part]
+
+    col1, col2 = st.columns(
+        [5.5, 1.8],
+        vertical_alignment="center"
+    )
+
+    with col1:
+
+        selected = st.checkbox(
+            f'{part} — {r["Description"]}',
+            value=(
+                st.session_state.accessory_qty.get(
+                    part, 0
+                ) > 0
+            ),
+            key=f"other_acc_{part}"
+        )
+
+    with col2:
+
+        if selected:
+
+            qty = st.number_input(
+                "Quantity",
+                min_value=1,
+                max_value=999,
+                step=1,
+                value=int(
+                    st.session_state.accessory_qty.get(
+                        part,
+                        1
+                    )
+                ),
+                key=f"other_qty_{part}"
+            )
+
+            st.session_state.accessory_qty[part] = qty
+
+        else:
+
+            st.session_state.accessory_qty.pop(
+                part,
+                None
+            )
 
 # ------------------------------------------------------------
 # 4 PDU selection
